@@ -96,6 +96,7 @@ class MemberProfile(models.Model):
     total_spending = models.DecimalField(
         'Total Belanja', max_digits=14, decimal_places=0, default=0,
     )
+    birth_date = models.DateField('Tanggal Lahir', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -175,7 +176,7 @@ class CustomerAddress(models.Model):
         User, on_delete=models.CASCADE, related_name='addresses',
         verbose_name='Pengguna'
     )
-    label = models.CharField('Label', max_length=50, blank=True)
+    label = models.CharField('Label', max_length=50, blank=True, choices=LABEL_CHOICES)
     recipient_name = models.CharField('Nama Penerima', max_length=100)
     phone = models.CharField('Nomor Telepon', max_length=20)
     address_line = models.TextField('Alamat Lengkap')
