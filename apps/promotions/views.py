@@ -119,6 +119,16 @@ def _get_session_voucher_ids(request):
     """Get product_voucher_id and shipping_voucher_id from session."""
     product_voucher_id = request.session.get('product_voucher_id')
     shipping_voucher_id = request.session.get('shipping_voucher_id')
+    # Fallback to voucher_code from session
+    if not product_voucher_id:
+        voucher_code = request.session.get('voucher_code')
+        if voucher_code:
+            try:
+                v = Voucher.objects.get(code__iexact=voucher_code)
+                if v.category == Voucher.Category.PRODUCT:
+                    product_voucher_id = v.id
+            except Voucher.DoesNotExist:
+                pass
     # Fallback: old combined dict
     if not product_voucher_id and not shipping_voucher_id:
         old = request.session.get('selected_vouchers', {})
@@ -148,14 +158,28 @@ def calculate_product_discount(subtotal, product_voucher_id, user):
         return 0, None
     try:
         pv = Voucher.objects.get(id=product_voucher_id, category=Voucher.Category.PRODUCT, is_active=True)
+        today = tz_now().date()
+        if pv.start_date and pv.start_date > today:
+            return 0, None
+        if pv.expired_date and pv.expired_date < today:
+            return 0, None
         if subtotal >= pv.min_purchase:
-            uv = UserVoucher.objects.filter(
-                user=user, voucher=pv,
-                status=UserVoucher.Status.AVAILABLE,
-                expires_at__gt=tz_now(),
-            ).first()
-            if uv:
+            if pv.voucher_type == Voucher.Type.PUBLIC:
+                if pv.quota > 0:
+                    total_uses = pv.used_count + UserVoucher.objects.filter(
+                        voucher=pv, status=UserVoucher.Status.USED
+                    ).count()
+                    if total_uses >= pv.quota:
+                        return 0, None
                 return pv.calculate_discount(subtotal), pv
+            else:
+                uv = UserVoucher.objects.filter(
+                    user=user, voucher=pv,
+                    status=UserVoucher.Status.AVAILABLE,
+                    expires_at__gt=tz_now(),
+                ).first()
+                if uv:
+                    return pv.calculate_discount(subtotal), pv
     except Voucher.DoesNotExist:
         pass
     return 0, None
@@ -167,14 +191,28 @@ def calculate_shipping_discount(shipping_cost, shipping_voucher_id, subtotal, us
         return 0, None
     try:
         sv = Voucher.objects.get(id=shipping_voucher_id, category=Voucher.Category.SHIPPING, is_active=True)
+        today = tz_now().date()
+        if sv.start_date and sv.start_date > today:
+            return 0, None
+        if sv.expired_date and sv.expired_date < today:
+            return 0, None
         if subtotal >= sv.min_purchase:
-            uv = UserVoucher.objects.filter(
-                user=user, voucher=sv,
-                status=UserVoucher.Status.AVAILABLE,
-                expires_at__gt=tz_now(),
-            ).first()
-            if uv:
+            if sv.voucher_type == Voucher.Type.PUBLIC:
+                if sv.quota > 0:
+                    total_uses = sv.used_count + UserVoucher.objects.filter(
+                        voucher=sv, status=UserVoucher.Status.USED
+                    ).count()
+                    if total_uses >= sv.quota:
+                        return 0, None
                 return sv.calculate_discount(shipping_cost), sv
+            else:
+                uv = UserVoucher.objects.filter(
+                    user=user, voucher=sv,
+                    status=UserVoucher.Status.AVAILABLE,
+                    expires_at__gt=tz_now(),
+                ).first()
+                if uv:
+                    return sv.calculate_discount(shipping_cost), sv
     except Voucher.DoesNotExist:
         pass
     return 0, None

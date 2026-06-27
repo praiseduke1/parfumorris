@@ -889,15 +889,7 @@ class TestVoucherCheckout:
         cart = Cart.objects.create(user=customer)
         CartItem.objects.create(cart=cart, product=product, quantity=2)
         logged_client.post(reverse('carts:apply_voucher'), {'code': 'DISKON10'})
-        resp = logged_client.post(reverse('orders:create'), {
-            'recipient_name': 'Budi',
-            'phone': '08123456789',
-            'shipping_address': 'Jl. Merdeka No. 10',
-            'province': location['province'].id,
-            'city': location['city'].id,
-            'district': location['district'].id,
-            'postal_code': location['postal_code'].id,
-        })
+        resp = self.assert_checkout_success(logged_client, location)
         assert resp.status_code == 302
         from apps.orders.models import Order
         order = Order.objects.filter(user=customer).first()
@@ -909,6 +901,9 @@ class TestVoucherCheckout:
         assert order.total_price == expected_subtotal - expected_discount
 
     def assert_checkout_success(self, logged_client, location, **overrides):
+        session = logged_client.session
+        session['shipping'] = {'courier_code': 'jne', 'service': 'OKE', 'cost': 0, 'etd': '3-5'}
+        session.save()
         data = {
             'recipient_name': 'Budi',
             'phone': '08123456789',

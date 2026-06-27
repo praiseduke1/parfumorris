@@ -11,7 +11,15 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-vercel-temp-key-change-in-
 DEBUG = os.getenv('DEBUG', 'True').strip().lower() in ('true', '1', 'yes')
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
+csrf_origins_str = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_str.split(',') if origin.strip()]
+
+# Automatically add Vercel domains to trusted origins
+if os.getenv('VERCEL_URL'):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.getenv('VERCEL_URL')}")
+if os.getenv('VERCEL_PROJECT_PRODUCTION_URL'):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.getenv('VERCEL_PROJECT_PRODUCTION_URL')}")
+CSRF_TRUSTED_ORIGINS.append("https://*.vercel.app")
 
 DJANGO_APPS = [
     'jazzmin',
@@ -89,17 +97,31 @@ IS_VERCEL = os.environ.get('VERCEL') == '1'
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-if IS_VERCEL and DATABASE_URL:
-    # Membaca URL database eksternal dari Environment Variables Vercel
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=True
-        )
-    }
+if IS_VERCEL:
+    if DATABASE_URL:
+        # Membaca URL database eksternal dari Environment Variables Vercel
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                ssl_require=True
+            )
+        }
+    else:
+        import sys
+        print("WARNING: Vercel environment detected but DATABASE_URL is not set. Falling back to dummy PostgreSQL config.", file=sys.stderr)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': '',
+                'USER': '',
+                'PASSWORD': '',
+                'HOST': '',
+                'PORT': '',
+            }
+        }
 else:
-    # Tetap gunakan SQLite untuk development di laptop (atau Vercel tanpa DB)
+    # Tetap gunakan SQLite untuk development di laptop
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -301,7 +323,14 @@ BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+email_port_str = os.getenv('EMAIL_PORT', '587')
+if email_port_str and email_port_str.strip():
+    try:
+        EMAIL_PORT = int(email_port_str)
+    except ValueError:
+        EMAIL_PORT = 587
+else:
+    EMAIL_PORT = 587
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').strip().lower() in ('true', '1', 'yes')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')

@@ -43,6 +43,55 @@ def order_create(request):
 
     pv_id, sv_id = _get_session_voucher_ids(request)
 
+    # Validate vouchers
+    session_voucher_code = request.session.get('voucher_code')
+    if session_voucher_code:
+        try:
+            pv_voucher = PromoVoucher.objects.get(code__iexact=session_voucher_code)
+        except PromoVoucher.DoesNotExist:
+            if 'voucher_code' in request.session:
+                del request.session['voucher_code']
+            if 'product_voucher_id' in request.session:
+                del request.session['product_voucher_id']
+            messages.error(request, 'Voucher tidak ditemukan.')
+            return redirect('carts:detail')
+
+    if pv_id:
+        try:
+            pv_voucher = PromoVoucher.objects.get(id=pv_id)
+            from apps.promotions.services import validate_voucher
+            is_valid, voucher, discount, error = validate_voucher(pv_voucher.code, request.user, subtotal)
+            if not is_valid:
+                if 'voucher_code' in request.session:
+                    del request.session['voucher_code']
+                if 'product_voucher_id' in request.session:
+                    del request.session['product_voucher_id']
+                messages.error(request, error or 'Voucher produk tidak valid.')
+                return redirect('carts:detail')
+        except PromoVoucher.DoesNotExist:
+            if 'product_voucher_id' in request.session:
+                del request.session['product_voucher_id']
+            if 'voucher_code' in request.session:
+                del request.session['voucher_code']
+            messages.error(request, 'Voucher produk tidak ditemukan.')
+            return redirect('carts:detail')
+
+    if sv_id:
+        try:
+            sv_voucher = PromoVoucher.objects.get(id=sv_id)
+            from apps.promotions.services import validate_voucher
+            is_valid, voucher, discount, error = validate_voucher(sv_voucher.code, request.user, subtotal)
+            if not is_valid:
+                if 'shipping_voucher_id' in request.session:
+                    del request.session['shipping_voucher_id']
+                messages.error(request, error or 'Voucher pengiriman tidak valid.')
+                return redirect('carts:detail')
+        except PromoVoucher.DoesNotExist:
+            if 'shipping_voucher_id' in request.session:
+                del request.session['shipping_voucher_id']
+            messages.error(request, 'Voucher pengiriman tidak ditemukan.')
+            return redirect('carts:detail')
+
     if pv_id:
         product_discount, product_voucher_obj = calculate_product_discount(
             subtotal, pv_id, request.user
@@ -80,6 +129,7 @@ def order_create(request):
                     'shipping_discount': shipping_discount,
                     'product_voucher_id': pv_id,
                     'shipping_voucher_id': sv_id,
+                    'voucher_code': request.session.get('voucher_code', ''),
                     'final_total': final_total,
                     'addresses': addresses,
                     'shipping_info': shipping_info,
@@ -179,6 +229,8 @@ def order_create(request):
                 del request.session['product_voucher_id']
             if 'shipping_voucher_id' in request.session:
                 del request.session['shipping_voucher_id']
+            if 'voucher_code' in request.session:
+                del request.session['voucher_code']
             if 'shipping' in request.session:
                 del request.session['shipping']
 
@@ -232,6 +284,7 @@ def order_create(request):
         'shipping_discount': shipping_discount,
         'product_voucher_id': pv_id,
         'shipping_voucher_id': sv_id,
+        'voucher_code': request.session.get('voucher_code', ''),
         'product_voucher_id_json': json.dumps(pv_id) if pv_id else 'null',
         'shipping_voucher_id_json': json.dumps(sv_id) if sv_id else 'null',
         'final_total': final_total,

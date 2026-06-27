@@ -28,13 +28,84 @@ def cart_detail(request):
     subtotal = cart.total_price()
     total_items = cart.total_items()
 
+    voucher_code = request.session.get('voucher_code', '')
+    voucher_discount = 0
+    final_total = subtotal
+
+    if voucher_code:
+        from apps.promotions.services import validate_voucher
+        is_valid, voucher, discount, error = validate_voucher(voucher_code, request.user, subtotal)
+        if is_valid:
+            voucher_discount = discount
+            final_total = subtotal - discount
+            if voucher.category == voucher.Category.PRODUCT:
+                request.session['product_voucher_id'] = voucher.id
+        else:
+            if 'voucher_code' in request.session:
+                del request.session['voucher_code']
+            if 'product_voucher_id' in request.session:
+                del request.session['product_voucher_id']
+            voucher_code = ''
+
     context = {
         'cart': cart,
         'cart_items': items,
         'subtotal': subtotal,
         'total_items': total_items,
+        'voucher_code': voucher_code,
+        'voucher_discount': voucher_discount,
+        'final_total': final_total,
     }
     return render(request, 'carts/cart_detail.html', context)
+
+
+@login_required
+@customer_required
+@require_POST
+def apply_voucher(request):
+    code = request.POST.get('code', '').strip()
+    if not code:
+        if 'voucher_code' in request.session:
+            del request.session['voucher_code']
+        if 'product_voucher_id' in request.session:
+            del request.session['product_voucher_id']
+        messages.error(request, 'Kode voucher tidak boleh kosong.')
+        return redirect('carts:detail')
+
+    cart = get_or_create_cart(request)
+    subtotal = cart.total_price()
+
+    from apps.promotions.services import validate_voucher
+    is_valid, voucher, discount, error = validate_voucher(code, request.user, subtotal)
+    if is_valid:
+        request.session['voucher_code'] = voucher.code
+        if voucher.category == voucher.Category.PRODUCT:
+            request.session['product_voucher_id'] = voucher.id
+        elif voucher.category == voucher.Category.SHIPPING:
+            request.session['shipping_voucher_id'] = voucher.id
+        messages.success(request, f'Voucher {voucher.code} berhasil diterapkan.')
+    else:
+        if 'voucher_code' in request.session:
+            del request.session['voucher_code']
+        if 'product_voucher_id' in request.session:
+            del request.session['product_voucher_id']
+        messages.error(request, error or 'Voucher tidak valid.')
+
+    return redirect('carts:detail')
+
+
+@login_required
+@customer_required
+@require_POST
+def remove_voucher(request):
+    if 'voucher_code' in request.session:
+        del request.session['voucher_code']
+    if 'product_voucher_id' in request.session:
+        del request.session['product_voucher_id']
+    if 'shipping_voucher_id' in request.session:
+        del request.session['shipping_voucher_id']
+    messages.success(request, 'Voucher berhasil dihapus.')
+    return redirect('carts:detail')
 
 
 @login_required
