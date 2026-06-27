@@ -14,7 +14,6 @@
     }
   ],
   "env": {
-    "DISABLE_COLLECTSTATIC": "1",
-    "PIP_REQUIREMENT_FILE": "reqs.txt"
+    "DISABLE_COLLECTSTATIC": "1"
   }
 }
