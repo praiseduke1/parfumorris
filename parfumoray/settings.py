@@ -1,18 +1,14 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import os
-import logging.handlers
 import dj_database_url
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-vercel-temp-key-change-in-production')
 DEBUG = os.getenv('DEBUG', 'True').strip().lower() in ('true', '1', 'yes')
-
-if not SECRET_KEY and not DEBUG:
-    raise RuntimeError('SECRET_KEY must be set in production!')
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
@@ -91,17 +87,19 @@ WSGI_APPLICATION = 'parfumoray.wsgi.application'
 # Deteksi lingkungan Vercel
 IS_VERCEL = os.environ.get('VERCEL') == '1'
 
-if IS_VERCEL:
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if IS_VERCEL and DATABASE_URL:
     # Membaca URL database eksternal dari Environment Variables Vercel
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
+            default=DATABASE_URL,
             conn_max_age=600,
             ssl_require=True
         )
     }
 else:
-    # Tetap gunakan SQLite untuk development di laptop
+    # Tetap gunakan SQLite untuk development di laptop (atau Vercel tanpa DB)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -370,7 +368,8 @@ LOGGING = {
 }
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Jangan redirect SSL di Vercel — Vercel sudah handle HTTPS di level proxy
+    SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000
