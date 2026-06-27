@@ -9,6 +9,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(o
 
 FIXTURE_FILE = os.path.join(PROJECT_ROOT, 'data_export_utf8.json')
 REFERENCE_FILE = os.path.join(PROJECT_ROOT, 'reference_data.json')
+API_REFERENCE_FILE = os.path.join(PROJECT_ROOT, 'api', 'reference_data.json')
 LEGACY_FILE = os.path.join(PROJECT_ROOT, 'data_export.json')
 
 
@@ -69,6 +70,7 @@ class Command(BaseCommand):
         for fpath, label in [
             (FIXTURE_FILE, 'full fixture'),
             (REFERENCE_FILE, 'reference data'),
+            (API_REFERENCE_FILE, 'api reference data'),
             (LEGACY_FILE, 'legacy export'),
         ]:
             if os.path.exists(fpath):

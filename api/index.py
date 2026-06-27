@@ -57,7 +57,7 @@ try:
 
             if count == 0:
                 print("Cold start: DB empty — restoring reference data...", flush=True)
-                ref_path = os.path.join(str(BASE_DIR), "reference_data.json")
+                ref_path = os.path.join(os.path.dirname(__file__), "reference_data.json")
                 if os.path.exists(ref_path):
                     call_command("loaddata", ref_path, verbosity=0)
                     print("Cold start: reference data loaded.", flush=True)
