@@ -1,6 +1,7 @@
 #!/bin/bash
-# Build script for Vercel deployment — safe for production
+# Production build script for Vercel deployment.
 # NEVER flushes the database or destroys data.
+# Only runs: pip install → collectstatic → migrate → start.
 
 set -e
 
@@ -8,12 +9,9 @@ echo "=== Installing dependencies ==="
 pip install -r requirements.txt
 
 echo "=== Collecting static files ==="
-python manage.py collectstatic --noinput --clear || echo "collectstatic failed or skipped"
+python manage.py collectstatic --noinput --clear
 
 echo "=== Running database migrations ==="
-python manage.py migrate --noinput || echo "Database migrations failed or skipped"
-
-echo "=== Restoring data if tables are empty ==="
-python manage.py restore_production_data || echo "Data restore command not available or skipped"
+python manage.py migrate --noinput
 
 echo "=== Build complete ==="

@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.db import connection
 
 
-FI_TURE_FILE = os.path.join(
+FIXTURE_FILE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))),
     'fixtures', 'complete_dump_utf8.json'
 )
@@ -34,7 +34,7 @@ IMPORTANT_TABLES = [
 
 
 class Command(BaseCommand):
-    help = 'Restore production data from fixture files safely'
+    help = 'MANUAL COMMAND: Restore production data from fixture files. Not run during deploy.'
 
     def add_arguments(self, parser):
         parser.add_argument('--force', action='store_true', help='Force restore even if data exists')
@@ -62,7 +62,7 @@ class Command(BaseCommand):
 
         # Try fixture file first
         loaded = False
-        for fpath, label in [(FI_TURE_FILE, 'fixture'), (LEGACY_FILE, 'legacy export')]:
+        for fpath, label in [(FIXTURE_FILE, 'fixture'), (LEGACY_FILE, 'legacy export')]:
             if os.path.exists(fpath):
                 self.stdout.write(f'Loading {label}: {fpath} ...')
                 try:

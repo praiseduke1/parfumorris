@@ -38,6 +38,7 @@ THIRD_PARTY_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'storages',
 ]
 
 LOCAL_APPS = [
@@ -308,21 +309,18 @@ JAZZMIN_UI_TWEAKS = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Production media storage — enable when Supabase Storage credentials are set.
-# 1. pip install django-storages boto3
-# 2. Add 'storages' to INSTALLED_APPS
-# 3. Uncomment and set env vars:
-# if os.getenv('AWS_ACCESS_KEY_ID'):
-#     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-#     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-#     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-#     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-#     AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'https://<project>.supabase.co/storage/v1/s3')
-#     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-southeast-1')
-#     AWS_DEFAULT_ACL = 'public-read'
-#     AWS_QUERYSTRING_AUTH = False
-# Note: On Vercel serverless, the local filesystem is ephemeral.
-# Media uploads MUST use external storage (Supabase Storage / S3) to persist.
+# Production media storage (Supabase Storage / S3-compatible).
+# On Vercel serverless, local filesystem is ephemeral.
+# Set AWS_ACCESS_KEY_ID + friends in Vercel env to persist uploads.
+if os.getenv('AWS_ACCESS_KEY_ID'):
+    STORAGES['default']['BACKEND'] = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'https://<project>.supabase.co/storage/v1/s3')
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-southeast-1')
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_QUERYSTRING_AUTH = False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -420,7 +418,6 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_BROWSER_XSS_FILTER = True
     SESSION_COOKIE_HTTPONLY = True
     CSRF_COOKIE_HTTPONLY = True
     DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
