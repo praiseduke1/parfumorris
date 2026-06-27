@@ -8,7 +8,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-vercel-temp-key-change-in-production')
-DEBUG = os.getenv('DEBUG', 'True').strip().lower() in ('true', '1', 'yes')
+DEBUG = os.getenv('DEBUG', 'False').strip().lower() in ('true', '1', 'yes')
 ALLOWED_HOSTS = ['*']
 
 csrf_origins_str = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000')
@@ -99,11 +99,10 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if IS_VERCEL:
     if DATABASE_URL:
-        # Membaca URL database eksternal dari Environment Variables Vercel
         DATABASES = {
             'default': dj_database_url.config(
                 default=DATABASE_URL,
-                conn_max_age=600,
+                conn_max_age=300,
                 ssl_require=True
             )
         }
@@ -121,7 +120,6 @@ if IS_VERCEL:
             }
         }
 else:
-    # Tetap gunakan SQLite untuk development di laptop
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -309,6 +307,22 @@ JAZZMIN_UI_TWEAKS = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Production media storage — enable when Supabase Storage credentials are set.
+# 1. pip install django-storages boto3
+# 2. Add 'storages' to INSTALLED_APPS
+# 3. Uncomment and set env vars:
+# if os.getenv('AWS_ACCESS_KEY_ID'):
+#     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+#     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+#     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+#     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+#     AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'https://<project>.supabase.co/storage/v1/s3')
+#     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-southeast-1')
+#     AWS_DEFAULT_ACL = 'public-read'
+#     AWS_QUERYSTRING_AUTH = False
+# Note: On Vercel serverless, the local filesystem is ephemeral.
+# Media uploads MUST use external storage (Supabase Storage / S3) to persist.
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

@@ -38,7 +38,8 @@ logs/
 # Emails
 emails/
 
-# Data exports / backups (never commit sensitive DB dumps)
+# Data exports / backups / fixtures (never commit sensitive DB dumps)
 data_export*.json
 backups/
+fixtures/
 
