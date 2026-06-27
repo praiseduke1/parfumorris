@@ -51,6 +51,8 @@ try:
             return
 
         try:
+            from django.core import serializers
+
             cur = connection.cursor()
             cur.execute("SELECT COUNT(*) FROM products_product")
             count = cur.fetchone()[0]
@@ -59,7 +61,11 @@ try:
                 print("Cold start: DB empty — restoring reference data...", flush=True)
                 ref_path = os.path.join(os.path.dirname(__file__), "reference_data.json")
                 if os.path.exists(ref_path):
-                    call_command("loaddata", ref_path, verbosity=0)
+                    with open(ref_path, 'rb') as f:
+                        raw = f.read()
+                    print(f"Cold start: read {len(raw)} bytes", flush=True)
+                    for obj in serializers.deserialize('json', raw, ignorenonexistent=True):
+                        obj.save()
                     print("Cold start: reference data loaded.", flush=True)
                 else:
                     print(f"Cold start: {ref_path} not found, skipping.", flush=True)
@@ -73,6 +79,8 @@ try:
                 print(f"Cold start: DB has {count} products, skipping restore.", flush=True)
         except Exception as e:
             print(f"Cold start: init error (non-fatal): {e}", flush=True)
+            import traceback
+            traceback.print_exc()
             return
 
         _db_initialized = True
@@ -86,6 +94,17 @@ except Exception:
 
 def app(environ, start_response):
     """Top-level WSGI callable required by Vercel."""
+    path = environ.get('PATH_INFO', '')
+
+    if path == '/__version__':
+        sha = os.environ.get('VERCEL_GIT_COMMIT_SHA', 'unknown')[:7]
+        body = sha.encode('utf-8')
+        start_response("200 OK", [
+            ("Content-Type", "text/plain"),
+            ("Content-Length", str(len(body))),
+        ])
+        return [body]
+
     if application is not None:
         _ensure_data()
         return application(environ, start_response)
