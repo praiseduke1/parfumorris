@@ -34,24 +34,60 @@ if str(BASE_DIR) not in sys.path:
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'parfumoray.settings')
 
-# Declare app at module level so Vercel's static analyzer can find it
-application = None
 _startup_error = None
 
 try:
     from django.core.wsgi import get_wsgi_application
+    from django.core.management import call_command
+    from django.db import connection
+
     application = get_wsgi_application()
+
+    _db_initialized = False
+
+    def _ensure_data():
+        global _db_initialized
+        if _db_initialized:
+            return
+        _db_initialized = True
+
+        try:
+            cur = connection.cursor()
+            cur.execute("SELECT COUNT(*) FROM products_product")
+            count = cur.fetchone()[0]
+
+            if count == 0:
+                print("Cold start: DB empty — restoring reference data...", flush=True)
+                ref_path = os.path.join(str(BASE_DIR), "reference_data.json")
+                if os.path.exists(ref_path):
+                    call_command("loaddata", ref_path, verbosity=0)
+                    print("Cold start: reference data loaded.", flush=True)
+                else:
+                    print(f"Cold start: {ref_path} not found, skipping.", flush=True)
+
+                from django.core.management import execute_from_command_line
+                print("Cold start: running placeholder generation...", flush=True)
+                try:
+                    call_command("generate_placeholders")
+                except Exception as e:
+                    print(f"Cold start: placeholders skipped ({e})", flush=True)
+            else:
+                print(f"Cold start: DB has {count} products, skipping restore.", flush=True)
+        except Exception as e:
+            print(f"Cold start: init error (non-fatal): {e}", flush=True)
+
 except Exception:
     _startup_error = traceback.format_exc()
     print("FATAL: Django WSGI startup failed:", file=sys.stderr)
     print(_startup_error, file=sys.stderr)
+    _db_initialized = True
 
 
 def app(environ, start_response):
     """Top-level WSGI callable required by Vercel."""
     if application is not None:
+        _ensure_data()
         return application(environ, start_response)
-    # Django failed to start — return the traceback as plain text
     body = f"Django startup error:\n\n{_startup_error}".encode("utf-8")
     start_response("500 Internal Server Error", [
         ("Content-Type", "text/plain"),

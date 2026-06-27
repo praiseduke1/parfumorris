@@ -15,9 +15,9 @@ echo "=== Running database migrations ==="
 python manage.py migrate --noinput
 
 echo "=== Restoring data (skips if data already exists) ==="
-python manage.py restore_production_data
+python manage.py restore_production_data || echo "Data restore skipped (non-fatal)"
 
 echo "=== Generating placeholder images ==="
-python manage.py generate_placeholders
+python manage.py generate_placeholders || echo "Placeholder gen skipped (non-fatal)"
 
 echo "=== Build complete ==="
