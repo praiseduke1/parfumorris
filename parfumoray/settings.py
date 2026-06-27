@@ -19,7 +19,6 @@ if os.getenv('VERCEL_URL'):
     CSRF_TRUSTED_ORIGINS.append(f"https://{os.getenv('VERCEL_URL')}")
 if os.getenv('VERCEL_PROJECT_PRODUCTION_URL'):
     CSRF_TRUSTED_ORIGINS.append(f"https://{os.getenv('VERCEL_PROJECT_PRODUCTION_URL')}")
-CSRF_TRUSTED_ORIGINS.append("https://*.vercel.app")
 
 DJANGO_APPS = [
     'jazzmin',
@@ -61,6 +60,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'apps.core.middleware.DynamicCsrfTrustedOriginsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
