@@ -325,11 +325,8 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'komerce_file': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'rajaongkir.log',
-            'maxBytes': 10485760,
-            'backupCount': 5,
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
     },
