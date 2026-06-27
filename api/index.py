@@ -34,18 +34,27 @@ if str(BASE_DIR) not in sys.path:
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'parfumoray.settings')
 
-try:
-    from django.core.wsgi import get_wsgi_application  # noqa: E402
-    app = get_wsgi_application()
-except Exception as e:
-    error_trace = traceback.format_exc()
-    print("FATAL: Django WSGI startup failed:", file=sys.stderr)
-    print(error_trace, file=sys.stderr)
+# Declare app at module level so Vercel's static analyzer can find it
+application = None
+_startup_error = None
 
-    def app(environ, start_response):
-        body = f"Django startup error:\n\n{error_trace}".encode("utf-8")
-        start_response("500 Internal Server Error", [
-            ("Content-Type", "text/plain"),
-            ("Content-Length", str(len(body))),
-        ])
-        return [body]
+try:
+    from django.core.wsgi import get_wsgi_application
+    application = get_wsgi_application()
+except Exception:
+    _startup_error = traceback.format_exc()
+    print("FATAL: Django WSGI startup failed:", file=sys.stderr)
+    print(_startup_error, file=sys.stderr)
+
+
+def app(environ, start_response):
+    """Top-level WSGI callable required by Vercel."""
+    if application is not None:
+        return application(environ, start_response)
+    # Django failed to start — return the traceback as plain text
+    body = f"Django startup error:\n\n{_startup_error}".encode("utf-8")
+    start_response("500 Internal Server Error", [
+        ("Content-Type", "text/plain"),
+        ("Content-Length", str(len(body))),
+    ])
+    return [body]
