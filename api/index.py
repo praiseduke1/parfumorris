@@ -49,7 +49,6 @@ try:
         global _db_initialized
         if _db_initialized:
             return
-        _db_initialized = True
 
         try:
             cur = connection.cursor()
@@ -65,7 +64,6 @@ try:
                 else:
                     print(f"Cold start: {ref_path} not found, skipping.", flush=True)
 
-                from django.core.management import execute_from_command_line
                 print("Cold start: running placeholder generation...", flush=True)
                 try:
                     call_command("generate_placeholders")
@@ -75,6 +73,9 @@ try:
                 print(f"Cold start: DB has {count} products, skipping restore.", flush=True)
         except Exception as e:
             print(f"Cold start: init error (non-fatal): {e}", flush=True)
+            return
+
+        _db_initialized = True
 
 except Exception:
     _startup_error = traceback.format_exc()
