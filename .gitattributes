@@ -1,0 +1,12 @@
+# Force LF line endings for all text files when pushed to GitHub
+* text=auto eol=lf
+
+# Explicitly force requirements files to LF
+requirements.txt text eol=lf
+reqs.txt text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.txt text eol=lf
