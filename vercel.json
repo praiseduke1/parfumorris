@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "parfumoray/wsgi.py",
+      "use": "@vercel/python",
+      "config": { "maxDuration": 60 }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "parfumoray/wsgi.py"
+    }
+  ],
+  "env": {
+    "DISABLE_COLLECTSTATIC": "1"
+  }
+}
