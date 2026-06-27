@@ -19,7 +19,8 @@ env/
 
 # Media & Static
 media/
-staticfiles/
+staticfiles/*
+!staticfiles/.gitkeep
 
 # IDE
 .vscode/
