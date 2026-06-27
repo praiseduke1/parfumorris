@@ -2,11 +2,10 @@
   "version": 2,
   "builds": [
     {
-      "src": "parfumoray/wsgi.py",
+      "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "maxDuration": 60,
-        "runtime": "python3.12"
+        "maxDuration": 60
       }
     }
   ],
@@ -17,7 +16,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "parfumoray/wsgi.py"
+      "dest": "api/index.py"
     }
   ],
   "env": {
