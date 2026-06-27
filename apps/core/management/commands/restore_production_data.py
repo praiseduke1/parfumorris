@@ -7,11 +7,11 @@ from django.db import connection
 
 FIXTURE_FILE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))),
-    'fixtures', 'complete_dump_utf8.json'
+    'data_export_utf8.json'
 )
 LEGACY_FILE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))),
-    'data_export_utf8.json'
+    'data_export.json'
 )
 
 

@@ -331,7 +331,12 @@ LOGOUT_REDIRECT_URL = 'products:list'
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400
 
-BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
+if os.getenv('VERCEL_URL'):
+    BASE_URL = f"https://{os.getenv('VERCEL_URL')}"
+elif os.getenv('VERCEL_PROJECT_PRODUCTION_URL'):
+    BASE_URL = f"https://{os.getenv('VERCEL_PROJECT_PRODUCTION_URL')}"
+else:
+    BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
