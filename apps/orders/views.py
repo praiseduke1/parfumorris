@@ -3,14 +3,20 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import F
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now
+from django.views.decorators.http import require_POST
 
 from apps.accounts.models import CustomerAddress
 from apps.core.decorators import customer_required
 from .forms import CheckoutForm
-from .models import Order, OrderItem, Voucher
+from .models import Order, OrderItem
 from apps.carts.models import Cart
-from apps.promotions.models import UserVoucher
-from apps.promotions.services import get_available_vouchers
+from apps.promotions.models import UserVoucher, Voucher as PromoVoucher
+from apps.promotions.views import (
+    calculate_subtotal, calculate_shipping_cost as calc_shipping_cost,
+    calculate_product_discount, calculate_shipping_discount, calculate_total,
+    _get_session_voucher_ids, _set_session_voucher_ids,
+)
+from apps.shipping.models import ShippingConfig
 
 
 @customer_required
@@ -24,46 +30,31 @@ def order_create(request):
         return redirect('carts:detail')
 
     cart_items = cart.items.select_related('product', 'variant').all()
-    subtotal = cart.total_price()
+    subtotal = calculate_subtotal(cart)
     total_items = cart.total_items()
 
-    user_voucher = None
-    discount_amount = 0
+    product_voucher_obj = None
+    shipping_voucher_obj = None
+    product_discount = 0
+    shipping_discount = 0
+
+    shipping_info = request.session.get('shipping', {})
+    shipping_cost_val = calc_shipping_cost(shipping_info)
+
+    pv_id, sv_id = _get_session_voucher_ids(request)
+
+    if pv_id:
+        product_discount, product_voucher_obj = calculate_product_discount(
+            subtotal, pv_id, request.user
+        )
+    if sv_id:
+        shipping_discount, shipping_voucher_obj = calculate_shipping_discount(
+            shipping_cost_val, sv_id, subtotal, request.user
+        )
+
+    discount_amount = product_discount + shipping_discount
 
     if request.method == 'POST':
-        user_voucher_id = request.POST.get('user_voucher_id')
-        if user_voucher_id:
-            try:
-                uv = UserVoucher.objects.select_related('voucher').get(
-                    id=user_voucher_id, user=request.user,
-                    status=UserVoucher.Status.AVAILABLE,
-                    expires_at__gt=now(),
-                )
-                if uv.voucher.min_purchase <= subtotal:
-                    user_voucher = uv
-                    if uv.voucher.discount_type == Voucher.DiscountType.FIXED:
-                        discount_amount = min(uv.voucher.discount_amount, subtotal)
-                    else:
-                        amount = subtotal * uv.voucher.discount_amount / 100
-                        if uv.voucher.max_discount:
-                            amount = min(amount, uv.voucher.max_discount)
-                        discount_amount = min(int(amount), subtotal)
-                else:
-                    messages.error(request, f'Minimal belanja {uv.voucher.min_purchase} untuk menggunakan voucher ini.')
-            except UserVoucher.DoesNotExist:
-                messages.error(request, 'Voucher tidak tersedia atau sudah kedaluwarsa.')
-        else:
-            voucher_code = request.session.get('voucher_code', '')
-            if voucher_code:
-                try:
-                    v = Voucher.objects.get(code=voucher_code)
-                    if v.is_valid(subtotal):
-                        discount_amount = v.calculate_discount(subtotal)
-                    else:
-                        del request.session['voucher_code']
-                except Voucher.DoesNotExist:
-                    del request.session['voucher_code']
-
         form = CheckoutForm(request.POST)
         if form.is_valid():
             for cart_item in cart_items:
@@ -77,19 +68,67 @@ def order_create(request):
                     )
                     return redirect('carts:detail')
 
+            if not shipping_info or not shipping_info.get('courier_code'):
+                messages.error(request, 'Pilih layanan pengiriman terlebih dahulu.')
+                final_total = subtotal - discount_amount
+                addresses = CustomerAddress.objects.filter(user=request.user)
+                context = {
+                    'form': form, 'cart': cart, 'cart_items': cart_items,
+                    'subtotal': subtotal, 'total_items': total_items,
+                    'discount_amount': discount_amount,
+                    'product_discount': product_discount,
+                    'shipping_discount': shipping_discount,
+                    'product_voucher_id': pv_id,
+                    'shipping_voucher_id': sv_id,
+                    'final_total': final_total,
+                    'addresses': addresses,
+                    'shipping_info': shipping_info,
+                }
+                return render(request, 'orders/order_create.html', context)
+
+            shipping_cost = int(shipping_info.get('cost', 0))
+
+            # Recalculate discounts with current shipping cost
+            if shipping_voucher_obj and shipping_cost > 0:
+                shipping_discount = shipping_voucher_obj.calculate_discount(shipping_cost)
+            elif shipping_voucher_obj and shipping_cost <= 0:
+                shipping_discount = 0
+            discount_amount = product_discount + shipping_discount
+
+            grand_total = calculate_total(subtotal, shipping_cost, product_discount, shipping_discount)
+
             order = form.save(commit=False)
             order.user = request.user
             order.subtotal = subtotal
             order.discount_amount = discount_amount
-            order.total_price = subtotal - discount_amount
-            if user_voucher:
-                try:
-                    order.voucher = Voucher.objects.get(code=user_voucher.voucher.code)
-                except Voucher.DoesNotExist:
-                    order.voucher = None
-            else:
-                order.voucher = None
+            order.product_discount = product_discount
+            order.shipping_discount = shipping_discount
+            order.product_voucher = product_voucher_obj
+            order.shipping_voucher = shipping_voucher_obj
+            order.shipping_cost = shipping_cost
+            order.shipping_courier = shipping_info.get('courier_code', '')
+            order.shipping_service = shipping_info.get('service', '')
+            order.shipping_estimation = shipping_info.get('etd', '')
+            order.shipping_weight = 0
+            order.shipping_origin = ''
+            order.shipping_destination = ''
+            order.total_price = grand_total
             order.save()
+
+            cart_weight = sum(
+                ((item.variant.weight if item.variant else None) or item.product.weight or 500) * item.quantity
+                for item in cart_items
+            )
+            order.shipping_weight = cart_weight
+            config = ShippingConfig.get_config()
+            order.shipping_origin = f'{config.origin_district}, {config.origin_city}'
+            dst_city = form.cleaned_data.get('city')
+            dst_district = form.cleaned_data.get('district')
+            if dst_city and dst_district:
+                order.shipping_destination = f'{dst_district.name}, {dst_city.name}'
+            order.save(update_fields=[
+                'shipping_weight', 'shipping_origin', 'shipping_destination',
+            ])
 
             for cart_item in cart_items:
                 unit_price = cart_item.variant.price if cart_item.variant else cart_item.product.price
@@ -97,6 +136,7 @@ def order_create(request):
                 OrderItem.objects.create(
                     order=order,
                     product=cart_item.product,
+                    variant=cart_item.variant,
                     product_name=cart_item.product.name,
                     variant_name=variant_name,
                     price=unit_price,
@@ -105,24 +145,52 @@ def order_create(request):
 
             cart.items.all().delete()
 
-            if user_voucher:
-                user_voucher.status = UserVoucher.Status.USED
-                user_voucher.used_at = now()
-                user_voucher.save()
-            elif order.voucher:
-                Voucher.objects.filter(pk=order.voucher.pk).update(used_count=F('used_count') + 1)
+            # Mark product voucher as used
+            if product_voucher_obj:
+                uv = UserVoucher.objects.filter(
+                    user=request.user, voucher=product_voucher_obj,
+                    status=UserVoucher.Status.AVAILABLE,
+                ).first()
+                if uv:
+                    uv.status = UserVoucher.Status.USED
+                    uv.used_at = now()
+                    uv.save()
+                else:
+                    PromoVoucher.objects.filter(pk=product_voucher_obj.pk).update(
+                        used_count=F('used_count') + 1
+                    )
 
-            if 'voucher_code' in request.session:
-                del request.session['voucher_code']
+            # Mark shipping voucher as used
+            if shipping_voucher_obj:
+                uv = UserVoucher.objects.filter(
+                    user=request.user, voucher=shipping_voucher_obj,
+                    status=UserVoucher.Status.AVAILABLE,
+                ).first()
+                if uv:
+                    uv.status = UserVoucher.Status.USED
+                    uv.used_at = now()
+                    uv.save()
+                else:
+                    PromoVoucher.objects.filter(pk=shipping_voucher_obj.pk).update(
+                        used_count=F('used_count') + 1
+                    )
 
-            messages.success(request, 'Pesanan berhasil dibuat!')
+            if 'product_voucher_id' in request.session:
+                del request.session['product_voucher_id']
+            if 'shipping_voucher_id' in request.session:
+                del request.session['shipping_voucher_id']
+            if 'shipping' in request.session:
+                del request.session['shipping']
+
             return redirect('payments:checkout', order_id=order.id)
 
         final_total = subtotal - discount_amount
-    else:
+        if shipping_info:
+            final_total += int(shipping_info.get('cost', 0))
+    else:  # GET
         addresses = CustomerAddress.objects.filter(user=request.user)
-        default_addr = addresses.filter(is_default=True).first()
         initial = {}
+        default_addr = addresses.filter(is_default=True).first()
         if default_addr:
             initial = {
                 'recipient_name': default_addr.recipient_name,
@@ -146,21 +214,12 @@ def order_create(request):
                 }
         form = CheckoutForm(initial=initial)
 
-        voucher_code = request.session.get('voucher_code', '')
-        if voucher_code:
-            try:
-                v = Voucher.objects.get(code=voucher_code)
-                if v.is_valid(subtotal):
-                    discount_amount = v.calculate_discount(subtotal)
-                else:
-                    del request.session['voucher_code']
-            except Voucher.DoesNotExist:
-                del request.session['voucher_code']
-
         final_total = subtotal - discount_amount
+        if shipping_info:
+            final_total += int(shipping_info.get('cost', 0))
 
-    user_vouchers = get_available_vouchers(request.user, subtotal)
     addresses = CustomerAddress.objects.filter(user=request.user)
+    import json
 
     context = {
         'form': form,
@@ -168,11 +227,16 @@ def order_create(request):
         'cart_items': cart_items,
         'subtotal': subtotal,
         'total_items': total_items,
-        'user_vouchers': user_vouchers,
-        'selected_user_voucher': user_voucher,
         'discount_amount': discount_amount,
+        'product_discount': product_discount,
+        'shipping_discount': shipping_discount,
+        'product_voucher_id': pv_id,
+        'shipping_voucher_id': sv_id,
+        'product_voucher_id_json': json.dumps(pv_id) if pv_id else 'null',
+        'shipping_voucher_id_json': json.dumps(sv_id) if sv_id else 'null',
         'final_total': final_total,
         'addresses': addresses,
+        'shipping_info': shipping_info,
     }
     return render(request, 'orders/order_create.html', context)
 
@@ -198,6 +262,7 @@ def order_list(request):
 
 @login_required
 @customer_required
+@require_POST
 def order_cancel(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     if order.status != Order.Status.PENDING_PAYMENT:
@@ -212,6 +277,7 @@ def order_cancel(request, order_id):
 
 @login_required
 @customer_required
+@require_POST
 def order_confirm_received(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     if order.status != Order.Status.DELIVERED:

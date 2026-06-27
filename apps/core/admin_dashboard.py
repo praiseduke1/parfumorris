@@ -2,6 +2,7 @@ from datetime import timedelta, date
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Avg, Count, Sum, F, Q
+from django.db.models.functions import TruncDate
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
@@ -13,6 +14,7 @@ from django.contrib.auth.models import User
 from apps.accounts.models import MemberProfile
 from apps.payments.models import Payment
 from apps.promotions.models import Voucher as PromoVoucher
+from apps.promotions.services import get_voucher_stats
 
 
 
@@ -84,17 +86,23 @@ def dashboard_view(request):
     chart_dates = []
     revenue_chart = []
     orders_chart = []
+    date_range_start = today - timedelta(days=days - 1)
+    daily_data = Order.objects.filter(
+        created_at__date__gte=date_range_start
+    ).annotate(
+        date=TruncDate('created_at')
+    ).values('date').annotate(
+        revenue=Sum('total_price', filter=Q(status__in=revenue_statuses)),
+        count=Count('id')
+    ).order_by('date')
+    date_map = {d['date']: d for d in daily_data}
     for i in range(days - 1, -1, -1):
         day = today - timedelta(days=i)
         label = day.strftime('%d %b')
-        day_orders = Order.objects.filter(created_at__date=day)
-        day_rev = day_orders.filter(status__in=revenue_statuses).aggregate(
-            Sum('total_price')
-        )['total_price__sum'] or 0
-        day_cnt = day_orders.count()
+        d = date_map.get(day, {})
         chart_dates.append(label)
-        revenue_chart.append(int(day_rev))
-        orders_chart.append(day_cnt)
+        revenue_chart.append(d.get('revenue') or 0)
+        orders_chart.append(d.get('count') or 0)
 
     # ──────────────────────────────────────────────────
     # 3. Monthly summary (last 12 months)
@@ -520,7 +528,12 @@ def dashboard_view(request):
     customers_month_change = round((customers_active_month - prev_month_customers) / prev_month_customers * 100, 1) if prev_month_customers else (100 if customers_active_month else 0)
 
     # ──────────────────────────────────────────────────
-    # 17. Chart helper flags + monthly max
+    # 17. Voucher stats by category
+    # ──────────────────────────────────────────────────
+    voucher_stats = get_voucher_stats()
+
+    # ──────────────────────────────────────────────────
+    # 18. Chart helper flags + monthly max
     # ──────────────────────────────────────────────────
     has_chart_data = sum(revenue_chart) > 0 and len(revenue_chart) > 2
     max_monthly_revenue = max((m['revenue'] for m in monthly_data), default=1)
@@ -661,5 +674,8 @@ def dashboard_view(request):
 
         'site_header': 'Morris Parfum',
         'site_title': 'Morris Parfum',
+
+        # Voucher stats
+        'voucher_stats': voucher_stats,
     }
     return render(request, 'admin/dashboard.html', context)

@@ -19,6 +19,7 @@ class CartItemInline(admin.TabularInline):
 class CartAdmin(admin.ModelAdmin):
     list_display = ['user', 'total_items', 'total_price', 'created_at']
     list_filter = ['created_at']
+    list_select_related = ['user']
     search_fields = ['user__username', 'user__email']
     autocomplete_fields = ['user']
     date_hierarchy = 'created_at'

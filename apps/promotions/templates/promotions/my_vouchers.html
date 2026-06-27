@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load core_tags %}
+
+{% block title %}Voucher Saya — Parfum Morris{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+        <div>
+            <h1 class="text-3xl lg:text-4xl font-serif font-bold text-stone-900">Voucher Saya</h1>
+            <p class="text-stone-500 mt-2">Kelola dan gunakan voucher diskon Anda</p>
+        </div>
+        <a href="{% url 'promotions:voucher_list' %}"
+            class="inline-flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-700 transition-colors group self-start">
+            <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Cari Voucher
+        </a>
+    </div>
+
+    <div class="flex gap-1 p-1 bg-stone-100 rounded-xl mb-8 overflow-x-auto scrollbar-thin">
+        <a href="{% url 'promotions:my_vouchers' %}?status=available"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap
+            {% if filter_status == 'available' %}bg-white text-stone-900 shadow-sm{% else %}text-stone-500 hover:text-stone-700{% endif %}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Tersedia
+        </a>
+        <a href="{% url 'promotions:my_vouchers' %}?status=used"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap
+            {% if filter_status == 'used' %}bg-white text-stone-900 shadow-sm{% else %}text-stone-500 hover:text-stone-700{% endif %}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+            </svg>
+            Terpakai
+        </a>
+        <a href="{% url 'promotions:my_vouchers' %}?status=expired"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap
+            {% if filter_status == 'expired' %}bg-white text-stone-900 shadow-sm{% else %}text-stone-500 hover:text-stone-700{% endif %}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Kedaluwarsa
+        </a>
+        <a href="{% url 'promotions:my_vouchers' %}?status=all"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap
+            {% if filter_status == 'all' %}bg-white text-stone-900 shadow-sm{% else %}text-stone-500 hover:text-stone-700{% endif %}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            Semua
+        </a>
+    </div>
+
+    {% if not product_vouchers and not shipping_vouchers %}
+    <div class="text-center py-24">
+        <div class="w-24 h-24 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-6">
+            <svg class="w-12 h-12 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 6h.008v.008H6V6z"></path>
+            </svg>
+        </div>
+        {% if filter_status == 'available' %}
+        <h2 class="text-2xl font-serif font-bold text-stone-800">Belum Ada Voucher Tersedia</h2>
+        <p class="text-stone-500 mt-2">Voucher yang Anda klaim akan muncul di sini.</p>
+        <a href="{% url 'promotions:voucher_list' %}"
+            class="inline-flex items-center gap-2 mt-8 bg-stone-900 hover:bg-stone-800 text-white font-medium px-6 py-2.5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-[0.98]">
+            Klaim Voucher
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+        </a>
+        {% elif filter_status == 'used' %}
+        <h2 class="text-2xl font-serif font-bold text-stone-800">Belum Ada Voucher Terpakai</h2>
+        <p class="text-stone-500 mt-2">Voucher yang sudah Anda gunakan akan muncul di sini.</p>
+        {% elif filter_status == 'expired' %}
+        <h2 class="text-2xl font-serif font-bold text-stone-800">Belum Ada Voucher Kedaluwarsa</h2>
+        <p class="text-stone-500 mt-2">Voucher yang sudah kedaluwarsa akan muncul di sini.</p>
+        {% else %}
+        <h2 class="text-2xl font-serif font-bold text-stone-800">Belum Ada Voucher</h2>
+        <p class="text-stone-500 mt-2">Daftar atau klaim voucher untuk mendapatkan diskon!</p>
+        <a href="{% url 'promotions:voucher_list' %}"
+            class="inline-flex items-center gap-2 mt-8 bg-stone-900 hover:bg-stone-800 text-white font-medium px-6 py-2.5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-[0.98]">
+            Lihat Promo
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if product_vouchers %}
+    <div class="mb-12">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 6h.008v.008H6V6z"></path>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-serif font-bold text-stone-900">Voucher Produk</h2>
+                <p class="text-xs text-stone-400">{{ counts_product.available }} voucher tersedia</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for uv in product_vouchers %}
+            {% with v=uv.voucher %}
+            <div class="group relative bg-white rounded-2xl border overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-xl
+                {% if uv.status == 'available' and uv.expires_at > now %}border-amber-200/60 shadow-sm hover:border-amber-300/80
+                {% elif uv.status == 'used' %}border-stone-200 opacity-75
+                {% else %}border-stone-200 opacity-60{% endif %}">
+                <div class="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full bg-amber-500/10"></div>
+                <div class="p-5 lg:p-6">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[11px] font-bold text-stone-400 uppercase tracking-[0.15em]">{{ v.code }}</span>
+                            </div>
+                            <h3 class="text-xl font-serif font-bold text-stone-900">
+                                {% if v.discount_type == 'percentage' %}{{ v.discount_amount }}% OFF{% else %}{{ v.discount_amount|rupiah }}{% endif %}
+                            </h3>
+                        </div>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap
+                            {% if uv.status == 'available' and uv.expires_at > now %}bg-amber-100 text-amber-800
+                            {% elif uv.status == 'used' %}bg-stone-100 text-stone-500
+                            {% else %}bg-rose-100 text-rose-600{% endif %}">
+                            {% if uv.status == 'available' and uv.expires_at > now %}<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>{% endif %}
+                            {{ uv.get_status_display }}
+                        </span>
+                    </div>
+                    {% if v.description %}
+                    <p class="text-sm text-stone-500 mb-3 leading-relaxed">{{ v.description }}</p>
+                    {% endif %}
+                    <div class="space-y-2 text-sm text-stone-500">
+                        {% if v.min_purchase %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Min. {{ v.min_purchase|rupiah }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% if uv.expires_at > now %}
+                            <span>{{ uv.expires_at|date:"d M Y" }}</span>
+                            {% else %}
+                            <span class="text-rose-500">Kedaluwarsa {{ uv.expires_at|date:"d M Y" }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if uv.status == 'available' and uv.expires_at > now %}
+                    <div class="mt-5">
+                        <a href="{% url 'orders:create' %}"
+                            class="flex items-center justify-center gap-2 w-full bg-stone-900 hover:bg-stone-800 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-300 text-sm shadow-sm hover:shadow-md active:scale-[0.98]">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Gunakan Sekarang
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endwith %}
+            {% empty %}
+            <div class="col-span-full text-center py-12 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
+                <p class="text-sm text-stone-400">Belum memiliki voucher produk.</p>
+                <a href="{% url 'promotions:voucher_list' %}" class="text-sm font-medium text-amber-600 hover:text-amber-700 mt-2 inline-block">Klaim Voucher Produk</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if shipping_vouchers %}
+    <div class="mb-12">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"></path>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-serif font-bold text-stone-900">Voucher Ongkir</h2>
+                <p class="text-xs text-stone-400">{{ counts_shipping.available }} voucher tersedia</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for uv in shipping_vouchers %}
+            {% with v=uv.voucher %}
+            <div class="group relative bg-white rounded-2xl border overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-xl
+                {% if uv.status == 'available' and uv.expires_at > now %}border-sky-200/60 shadow-sm hover:border-sky-300/80
+                {% elif uv.status == 'used' %}border-stone-200 opacity-75
+                {% else %}border-stone-200 opacity-60{% endif %}">
+                <div class="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full bg-sky-500/10"></div>
+                <div class="p-5 lg:p-6">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[11px] font-bold text-stone-400 uppercase tracking-[0.15em]">{{ v.code }}</span>
+                            </div>
+                            <h3 class="text-xl font-serif font-bold text-stone-900">
+                                {% if v.discount_type == 'percentage' %}{{ v.discount_amount }}% OFF{% else %}{{ v.discount_amount|rupiah }}{% endif %}
+                            </h3>
+                        </div>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap
+                            {% if uv.status == 'available' and uv.expires_at > now %}bg-sky-100 text-sky-800
+                            {% elif uv.status == 'used' %}bg-stone-100 text-stone-500
+                            {% else %}bg-rose-100 text-rose-600{% endif %}">
+                            {% if uv.status == 'available' and uv.expires_at > now %}<span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>{% endif %}
+                            {{ uv.get_status_display }}
+                        </span>
+                    </div>
+                    {% if v.description %}
+                    <p class="text-sm text-stone-500 mb-3 leading-relaxed">{{ v.description }}</p>
+                    {% endif %}
+                    <div class="space-y-2 text-sm text-stone-500">
+                        {% if v.min_purchase %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Min. {{ v.min_purchase|rupiah }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% if uv.expires_at > now %}
+                            <span>{{ uv.expires_at|date:"d M Y" }}</span>
+                            {% else %}
+                            <span class="text-rose-500">Kedaluwarsa {{ uv.expires_at|date:"d M Y" }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if uv.status == 'available' and uv.expires_at > now %}
+                    <div class="mt-5">
+                        <a href="{% url 'orders:create' %}"
+                            class="flex items-center justify-center gap-2 w-full bg-stone-900 hover:bg-stone-800 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-300 text-sm shadow-sm hover:shadow-md active:scale-[0.98]">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Gunakan Sekarang
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endwith %}
+            {% empty %}
+            <div class="col-span-full text-center py-12 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
+                <p class="text-sm text-stone-400">Belum memiliki voucher ongkir.</p>
+                <a href="{% url 'promotions:voucher_list' %}" class="text-sm font-medium text-sky-600 hover:text-sky-700 mt-2 inline-block">Klaim Voucher Ongkir</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

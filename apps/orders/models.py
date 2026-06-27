@@ -5,7 +5,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 
-from apps.products.models import Product
+from apps.products.models import Product, ProductVariant
+from apps.promotions.models import Voucher as PromoVoucher
 
 
 class Voucher(models.Model):
@@ -97,6 +98,14 @@ class Order(models.Model):
     )
     subtotal = models.DecimalField('Subtotal', max_digits=12, decimal_places=0, default=0)
     discount_amount = models.DecimalField('Diskon', max_digits=12, decimal_places=0, default=0)
+    shipping_cost = models.DecimalField('Ongkos Kirim', max_digits=12, decimal_places=0, default=0)
+    shipping_courier = models.CharField('Kurir', max_length=20, blank=True)
+    shipping_service = models.CharField('Layanan', max_length=50, blank=True)
+    shipping_estimation = models.CharField('Estimasi', max_length=50, blank=True)
+    shipping_weight = models.PositiveIntegerField('Berat (gram)', default=0)
+    shipping_origin = models.CharField('Asal Pengiriman', max_length=200, blank=True)
+    shipping_destination = models.CharField('Tujuan Pengiriman', max_length=200, blank=True)
+    tracking_number = models.CharField('Nomor Resi', max_length=100, blank=True)
     total_price = models.DecimalField('Total Harga', max_digits=12, decimal_places=0)
 
     paid_at = models.DateTimeField('Tanggal Pembayaran', null=True, blank=True)
@@ -109,6 +118,16 @@ class Order(models.Model):
         Voucher, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='orders', verbose_name='Voucher'
     )
+    product_voucher = models.ForeignKey(
+        PromoVoucher, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='product_orders', verbose_name='Voucher Produk'
+    )
+    shipping_voucher = models.ForeignKey(
+        PromoVoucher, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='shipping_orders', verbose_name='Voucher Ongkir'
+    )
+    product_discount = models.DecimalField('Diskon Produk', max_digits=12, decimal_places=0, default=0)
+    shipping_discount = models.DecimalField('Diskon Ongkir', max_digits=12, decimal_places=0, default=0)
 
     midtrans_order_id = models.UUIDField(
         'ID Midtrans', default=uuid.uuid4, unique=True, editable=False
@@ -118,6 +137,7 @@ class Order(models.Model):
     shipping_address = models.TextField('Alamat Lengkap')
     city = models.CharField('Kota', max_length=100)
     province = models.CharField('Provinsi', max_length=100, blank=True)
+    district = models.CharField('Kecamatan', max_length=100, blank=True)
     postal_code = models.CharField('Kode Pos', max_length=10)
     notes = models.TextField('Catatan Pesanan', blank=True)
 
@@ -201,8 +221,12 @@ class OrderItem(models.Model):
         verbose_name='Pesanan'
     )
     product = models.ForeignKey(
-        Product, on_delete=models.SET_NULL, null=True,
+        Product, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='order_items', verbose_name='Produk'
+    )
+    variant = models.ForeignKey(
+        ProductVariant, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='order_items', verbose_name='Varian'
     )
     product_name = models.CharField('Nama Produk', max_length=200)
     variant_name = models.CharField('Nama Varian', max_length=50, blank=True)

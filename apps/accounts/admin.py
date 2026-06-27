@@ -52,6 +52,7 @@ class ProfileAdmin(admin.ModelAdmin):
 @admin.register(CustomerAddress)
 class CustomerAddressAdmin(admin.ModelAdmin):
     list_display = ['user', 'label', 'recipient_name', 'city', 'district', 'is_default']
+    list_select_related = ['user', 'province', 'city', 'district']
     list_filter = ['is_default', 'city__province', 'city']
     search_fields = ['user__username', 'recipient_name', 'label']
     autocomplete_fields = ['user', 'province', 'city', 'district', 'postal_code']
@@ -61,6 +62,7 @@ class CustomerAddressAdmin(admin.ModelAdmin):
 @admin.register(MemberProfile)
 class MemberProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'level', 'total_points', 'total_spending_formatted', 'created_at']
+    list_select_related = ['user']
     list_filter = ['level', 'created_at']
     search_fields = ['user__username']
     autocomplete_fields = ['user']
@@ -74,6 +76,7 @@ class MemberProfileAdmin(admin.ModelAdmin):
 @admin.register(PointTransaction)
 class PointTransactionAdmin(admin.ModelAdmin):
     list_display = ['user', 'points', 'type', 'description', 'created_at']
+    list_select_related = ['user']
     list_filter = ['type', 'created_at']
     search_fields = ['user__username', 'description']
     autocomplete_fields = ['user']
@@ -90,6 +93,7 @@ class PointTransactionAdmin(admin.ModelAdmin):
 @admin.register(Wishlist)
 class WishlistAdmin(admin.ModelAdmin):
     list_display = ['user', 'product', 'created_at']
+    list_select_related = ['user', 'product']
     list_filter = ['created_at']
     search_fields = ['user__username', 'product__name']
     autocomplete_fields = ['user', 'product']

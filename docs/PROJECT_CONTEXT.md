@@ -73,8 +73,9 @@ parfumoray/
 - Fitur: tambah/ubah/hapus item keranjang, validasi stok (variant-aware), unique_together [cart, product, variant].
 
 ### orders
-- Models: `Order`, `OrderItem` (snapshot variant_name), `OrderStatusHistory` (audit trail dengan field `status`), `Voucher`.
-- Fitur: create order dari cart, cancel order (hanya `PENDING_PAYMENT`), history pesanan, tracking pesanan (timeline visual), status audit trail (auto via save()), voucher diskon (persen/nominal, min purchase, usage limit, session-based).
+- Models: `Order`, `OrderItem` (snapshot varian_name), `OrderStatusHistory` (audit trail dengan field `status`), `Voucher`.
+- Fitur: create order dari cart, cancel order (hanya `PENDING_PAYMENT`), history pesanan, tracking pesanan (timeline visual), status audit trail (auto via save()), voucher diskon (product + shipping terpisah via session), checkout dengan 2-step courier→service.
+- Flow checkout: Alamat → Penerima → Kurir → Layanan → Voucher Ongkir → Daftar Produk → Voucher Produk → Catatan → Ringkasan → Bayar.
 - Status: `PENDING_PAYMENT` → `PAID` → `PROCESSING` → `SHIPPED` → `DELIVERED`.
 
 ### payments
@@ -83,9 +84,10 @@ parfumoray/
 - Keamanan: verifikasi signature HMAC Midtrans.
 
 ### promotions
-- Models: `Voucher` (template promo), `UserVoucher` (per-user assignment with individual expiry).
-- Fitur: auto-assign welcome voucher saat registrasi (`services.assign_welcome_voucher()`), daftar voucher customer (`/accounts/vouchers/`), pilih voucher di checkout.
-- Terpisah dari `orders.Voucher` yang bersifat global/session-based.
+- Models: `Voucher` (template promo dengan category PRODUCT/SHIPPING), `UserVoucher` (per-user assignment with individual expiry).
+- Fitur: auto-assign welcome voucher saat registrasi (`services.assign_welcome_voucher()`), daftar voucher customer (`/accounts/vouchers/`), pilih voucher per-kategori di checkout via modal.
+- Session keys terpisah: `product_voucher_id`, `shipping_voucher_id` (bukan combined dict).
+- Fungsi diskon: `calculate_product_discount()`, `calculate_shipping_discount()`, `calculate_subtotal()`, `calculate_shipping_cost()`, `calculate_total()`.
 
 ## Prinsip Pengembangan
 

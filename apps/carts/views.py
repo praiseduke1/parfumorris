@@ -1,11 +1,13 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.core.decorators import customer_required
 from .models import Cart, CartItem
 from apps.products.models import Product, ProductVariant
-from apps.orders.models import Voucher
+
 
 
 def get_cart_item_stock(cart_item):
@@ -26,34 +28,18 @@ def cart_detail(request):
     subtotal = cart.total_price()
     total_items = cart.total_items()
 
-    voucher_code = request.session.get('voucher_code', '')
-    voucher_discount = 0
-    if voucher_code:
-        try:
-            voucher = Voucher.objects.get(code=voucher_code)
-            if voucher.is_valid(subtotal):
-                voucher_discount = voucher.calculate_discount(subtotal)
-            else:
-                del request.session['voucher_code']
-                voucher_code = ''
-        except Voucher.DoesNotExist:
-            del request.session['voucher_code']
-            voucher_code = ''
-
     context = {
         'cart': cart,
         'cart_items': items,
         'subtotal': subtotal,
         'total_items': total_items,
-        'voucher_code': voucher_code,
-        'voucher_discount': voucher_discount,
-        'final_total': subtotal - voucher_discount,
     }
     return render(request, 'carts/cart_detail.html', context)
 
 
 @login_required
 @customer_required
+@require_POST
 def cart_add(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_available=True)
     variant_id = request.POST.get('variant_id')
@@ -76,7 +62,9 @@ def cart_add(request, product_id):
         label = f'{product.name} ({variant.size_ml}ml)' if variant else product.name
         messages.error(request, f'Stok {label} tidak mencukupi. Stok tersedia: {max_stock}')
         next_url = request.POST.get('next') or request.GET.get('next') or 'carts:detail'
-        return redirect(next_url)
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+            return redirect(next_url)
+        return redirect('carts:detail')
 
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart, product=product, variant=variant,
@@ -93,11 +81,14 @@ def cart_add(request, product_id):
         messages.success(request, f'{label} ditambahkan ke keranjang')
 
     next_url = request.POST.get('next') or request.GET.get('next') or 'carts:detail'
-    return redirect(next_url)
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+        return redirect(next_url)
+    return redirect('carts:detail')
 
 
 @login_required
 @customer_required
+@require_POST
 def cart_update(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     action = request.POST.get('action', 'set')
@@ -130,6 +121,7 @@ def cart_update(request, item_id):
 
 @login_required
 @customer_required
+@require_POST
 def cart_remove(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     product_name = str(cart_item)
@@ -138,37 +130,4 @@ def cart_remove(request, item_id):
     return redirect('carts:detail')
 
 
-@login_required
-@customer_required
-def cart_apply_voucher(request):
-    code = request.POST.get('code', '').strip().upper()
-    if not code:
-        messages.error(request, 'Masukkan kode voucher.')
-        return redirect('carts:detail')
 
-    cart = get_or_create_cart(request)
-    subtotal = cart.total_price()
-
-    try:
-        voucher = Voucher.objects.get(code=code)
-    except Voucher.DoesNotExist:
-        messages.error(request, 'Kode voucher tidak ditemukan.')
-        return redirect('carts:detail')
-
-    if not voucher.is_valid(subtotal):
-        messages.error(request, 'Voucher tidak dapat digunakan. Periksa masa berlaku atau ketentuan minimum belanja.')
-        return redirect('carts:detail')
-
-    request.session['voucher_code'] = code
-    discount = voucher.calculate_discount(subtotal)
-    messages.success(request, f'Voucher {code} berhasil digunakan! Diskon: Rp {discount:,}')
-    return redirect('carts:detail')
-
-
-@login_required
-@customer_required
-def cart_remove_voucher(request):
-    if 'voucher_code' in request.session:
-        del request.session['voucher_code']
-        messages.info(request, 'Voucher berhasil dihapus.')
-    return redirect('carts:detail')

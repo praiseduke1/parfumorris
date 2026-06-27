@@ -15,10 +15,12 @@ urlpatterns = [
     path('', include('apps.products.urls')),
     path('', include('apps.regions.urls')),
     path('accounts/', include('apps.accounts.urls')),
+    path('accounts/', include('allauth.urls')),
     path('cart/', include('apps.carts.urls')),
     path('orders/', include('apps.orders.urls')),
     path('payment/', include('apps.payments.urls')),
     path('promotions/', include('apps.promotions.urls')),
+    path('shipping/', include('apps.shipping.urls')),
 ]
 
 if settings.DEBUG:

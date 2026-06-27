@@ -40,6 +40,7 @@ class District(models.Model):
     )
     code = models.CharField('Kode Kecamatan', max_length=8, unique=True)
     name = models.CharField('Kecamatan', max_length=100)
+    komerce_id = models.PositiveIntegerField('ID Komerce', null=True, blank=True, unique=True)
 
     class Meta:
         verbose_name = 'Kecamatan'
@@ -62,6 +63,7 @@ class PostalCode(models.Model):
         verbose_name = 'Kode Pos'
         verbose_name_plural = 'Kode Pos'
         ordering = ['code']
+        unique_together = [['district', 'code']]
         indexes = [models.Index(fields=['district'])]
 
     def __str__(self):

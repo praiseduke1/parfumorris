@@ -127,28 +127,6 @@ User                      Browser                    Server (Django)
 │                           │     discount line)         │
 │◄──────────────────────────│                            │
 │                           │                            │
-│  Apply voucher            │                            │
-│──────────────────────────►│                            │
-│                           │  POST /cart/voucher/apply/ │
-│                           │  (code=WELCOME10)          │
-│                           │───────────────────────────►│
-│                           │                            │  Validasi voucher:
-│                           │                            │  - Active, not expired
-│                           │                            │  - Min purchase met
-│                           │                            │  - Under max uses
-│                           │                            │  Store code in session
-│                           │                            │  Calculate discount
-│                           │◄── redirect /cart/ ────────│
-│◄──────────────────────────│                            │
-│                           │                            │
-│  Hapus voucher            │                            │
-│──────────────────────────►│                            │
-│                           │  POST /cart/voucher/remove/│
-│                           │───────────────────────────►│
-│                           │                            │  Clear session code
-│                           │◄── redirect /cart/ ────────│
-│◄──────────────────────────│                            │
-│                           │                            │
 │  Update jumlah            │                            │
 │──────────────────────────►│                            │
 │                           │  POST /cart/update/<id>/   │
@@ -177,39 +155,73 @@ User                      Browser                    Server (Django)
 │──────────────────────────►│                            │
 │                           │  GET /orders/create/       │
 │                           │───────────────────────────►│
-│                           │                            │  Read voucher dari session
-│                           │                            │  Validasi voucher ulang
-│                           │                            │  Hitung diskon + final total
-│                           │                            │  get_available_vouchers(user, subtotal)
-│                           │                            │    → UserVoucher list for selection
+│                           │                            │  Read product_voucher_id /
+│                           │                            │    shipping_voucher_id dari session
+│                           │                            │  Hitung: calculate_product_discount()
+│                           │                            │    + calculate_shipping_discount()
 │                           │                            │  Pre-fill form dari Profile
 │                           │◄── order_create.html ──────│
-│                           │    (subtotal + diskon +    │
-│                           │     final total +          │
-│                           │     user voucher list)     │
+│                           │    (subtotal + product_diskon+
+│                           │     shipping_diskon +      │
+│                           │     ringkasan)             │
 │◄──────────────────────────│                            │
 │                           │                            │
-│  Pilih voucher + isi     │                            │
-│  alamat + submit          │                            │
+│  Pilih alamat (district)  │                            │
+│  → auto hitung ongkir     │                            │
+│──────────────────────────►│                            │
+│                           │  POST /shipping/api/cost/  │
+│                           │  (district_id)             │
+│                           │───────────────────────────►│
+│                           │                            │  lookup_komerce_id()
+│                           │                            │  get_cached_cost()
+│                           │                            │  format_courier_services()
+│                           │◄── {services: [...]} ──────│
+│◄──────────────────────────│                            │
+│                           │                            │
+│  Pilih kurir →            │                            │
+│  tampil layanan           │                            │
+│──────────────────────────►│                            │
+│                           │  (client-side: filter      │
+│                           │   services by courier_code)│
+│◄──────────────────────────│                            │
+│                           │                            │
+│  Pilih layanan            │                            │
+│──────────────────────────►│                            │
+│                           │  POST /shipping/api/select/│
+│                           │  (courier, service, cost)  │
+│                           │───────────────────────────►│
+│                           │                            │  Store di session['shipping']
+│                           │◄── {ok: true} ────────────│
+│◄──────────────────────────│                            │
+│                           │                            │
+│  Pilih voucher            │                            │
+│  (product/shipping)       │                            │
+│──────────────────────────►│                            │
+│                           │  GET /promotions/api/my_vouchers/?category=product
+│                           │───────────────────────────►│
+│                           │◄── {vouchers: [...]} ──────│
+│◄──────────────────────────│                            │
+│                           │                            │
+│  Select voucher           │                            │
+│──────────────────────────►│                            │
+│                           │  POST /promotions/api/voucher/select/
+│                           │  (voucher_id, category)    │
+│                           │───────────────────────────►│
+│                           │                            │  Validate + calculate discount
+│                           │                            │  Store product_voucher_id/
+│                           │                            │    shipping_voucher_id di session
+│                           │◄── {discounts + voucher_id}│
+│◄──────────────────────────│                            │
+│                           │                            │
+│  Submit form              │                            │
 │──────────────────────────►│                            │
 │                           │  POST /orders/create/      │
-│                           │  (user_voucher_id=X)       │
 │                           │───────────────────────────►│
-│                           │                            │  Validasi form
-│                           │                            │  Validasi stok (loop)
-│                           │                            │  If user_voucher_id:
-│                           │                            │    Validate UserVoucher
-│                           │                            │    Calculate discount
-│                           │                            │  Else: use session voucher
-│                           │                            │  Create Order:
-│                           │                            │    subtotal = cart total
-│                           │                            │    discount_amount = diskon
-│                           │                            │    total_price = final total
-│                           │                            │    voucher = FK
-│                           │                            │  If UserVoucher used:
-│                           │                            │    mark status=USED
-│                           │                            │  Increment used_count (F())
-│                           │                            │  Clear session voucher
+│                           │                            │  Validasi form + stok
+│                           │                            │  Recalculate discounts
+│                           │                            │  Create Order dari form
+│                           │                            │  Mark UserVoucher as USED
+│                           │                            │  Clear session keys
 │                           │                            │  Create OrderItems (snapshot)
 │                           │                            │  Hapus CartItems
 │                           │                            │
@@ -374,10 +386,8 @@ Midtrans Server                          Server (Django)
 | POST | `/cart/add/<id>/` | Add to cart (variant-aware) | Login+Customer |
 | POST | `/cart/update/<id>/` | Update cart item | Login+Customer |
 | POST | `/cart/remove/<id>/` | Remove cart item | Login+Customer |
-| POST | `/cart/voucher/apply/` | Apply voucher code | Login+Customer |
-| POST | `/cart/voucher/remove/` | Remove voucher | Login+Customer |
-| GET | `/cart/` | Cart detail (with voucher UI) | Login+Customer |
-| GET | `/orders/create/` | Checkout form (with UserVoucher list) | Login+Customer |
+| GET | `/cart/` | Cart detail (ringkasan produk saja) | Login+Customer |
+| GET | `/orders/create/` | Checkout form (multi-section) | Login+Customer |
 | POST | `/orders/create/` | Submit order | Login+Customer |
 | GET | `/orders/` | Order list | Login+Customer |
 | GET | `/orders/<id>/` | Order detail | Login+Customer |
@@ -400,3 +410,10 @@ Midtrans Server                          Server (Django)
 | POST | `/accounts/wishlist/add/<id>/` | Add to wishlist | Login+Customer |
 | POST | `/accounts/wishlist/remove/<id>/` | Remove from wishlist | Login+Customer |
 | GET | `/accounts/vouchers/` | User voucher list | Login+Customer |
+| POST | `/shipping/api/cost/` | Get shipping costs (RajaOngkir) | Login+Customer |
+| POST | `/shipping/api/select/` | Select shipping service | Login+Customer |
+| POST | `/shipping/api/clear/` | Clear shipping selection | Login+Customer |
+| GET | `/promotions/api/my_vouchers/?category=` | User vouchers by category | Login+Customer |
+| POST | `/promotions/api/voucher/select/` | Select voucher (product/shipping) | Login+Customer |
+| POST | `/promotions/api/voucher/remove/` | Remove selected voucher | Login+Customer |
+| POST | `/promotions/api/calculate/totals/` | Recalculate totals | Login+Customer |

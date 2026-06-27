@@ -10,19 +10,23 @@
     <div class="absolute inset-0 bg-gradient-to-br from-morris-950 via-morris-900 to-morris-950"></div>
     <div class="absolute top-20 right-0 w-96 h-96 bg-gold-500/5 rounded-full blur-3xl"></div>
     <div class="absolute bottom-20 left-0 w-80 h-80 bg-gold-500/10 rounded-full blur-3xl"></div>
-    <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIvPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
+    <div
+        class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIvPjwvZz48L2c+PC9zdmc+')] opacity-40">
+    </div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div class="max-w-3xl">
-            <span class="inline-flex items-center gap-2 px-4 py-1.5 bg-gold-500/10 text-gold-400 text-sm font-medium rounded-full border border-gold-500/20">
+            <span
+                class="inline-flex items-center gap-2 px-4 py-1.5 bg-gold-500/10 text-gold-400 text-sm font-medium rounded-full border border-gold-500/20">
                 <span class="w-1.5 h-1.5 rounded-full bg-gold-500"></span>
                 Koleksi 2026
             </span>
-            <h1 class="mt-8 text-5xl sm:text-6xl lg:text-8xl font-serif font-bold text-white leading-[1.1] tracking-tight">
+            <h1
+                class="mt-8 text-5xl sm:text-6xl lg:text-8xl font-serif font-bold text-white leading-[1.1] tracking-tight">
                 Find Your<br>
                 <span class="italic text-gold-400">Signature Scent</span>
             </h1>
             <p class="mt-6 text-lg text-morris-300 max-w-xl leading-relaxed">
-                Discover your identity through our premium fragrance collection. 
+                Discover your identity through our premium fragrance collection.
                 Every scent is designed to leave a lasting impression.
             </p>
             <div class="flex flex-wrap gap-4 mt-10">
@@ -30,7 +34,8 @@
                     class="inline-flex items-center gap-2 bg-gold-600 hover:bg-gold-500 text-white font-medium px-8 py-3.5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-[0.98]">
                     Explore Collection
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                     </svg>
                 </a>
                 <a href="{% url 'products:fragrance_guide' %}"
@@ -42,32 +47,142 @@
     </div>
 </section>
 
-{% comment %} Categories Section {% endcomment %}
-<section id="categories" class="py-20 lg:py-28 bg-morris-950">
+{% comment %} Fragrance Families Section {% endcomment %}
+<section id="fragrance-families" class="py-20 lg:py-28 bg-morris-950">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-xl mx-auto mb-16">
-            <span class="text-gold-500 font-medium text-sm tracking-[0.2em] uppercase">Categories</span>
+            <span class="text-gold-500 font-medium text-sm tracking-[0.2em] uppercase">Families</span>
             <h2 class="mt-4 text-3xl lg:text-4xl font-serif font-bold text-white">Explore Fragrance Families</h2>
-            <p class="mt-4 text-morris-400 leading-relaxed">Find the scent that matches your personality and special moments</p>
+            <p class="mt-4 text-morris-400 leading-relaxed">Find the scent that matches your personality and special
+                moments</p>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {% for category in categories %}
-            <a href="{% url 'products:list' %}?category={{ category.slug }}"
+            {% for family in fragrance_families %}
+            <a href="{% url 'products:by_family' family.slug %}"
                 class="group relative bg-morris-900/50 rounded-2xl p-8 text-center hover:bg-gold-600/10 transition-all duration-500 border border-morris-800 hover:border-gold-500/30 hover:shadow-xl hover:-translate-y-1">
-                <div class="w-16 h-16 rounded-full bg-morris-800 flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-600/20 transition-all duration-500 shadow-sm">
-                    <span class="text-xl font-serif font-bold text-gold-400 group-hover:text-gold-300 transition-colors duration-500">{{ category.name|first }}</span>
+                <div
+                    class="w-16 h-16 rounded-full bg-morris-800 flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-600/20 transition-all duration-500 shadow-sm">
+                    <span
+                        class="text-xl font-serif font-bold text-gold-400 group-hover:text-gold-300 transition-colors duration-500">{{ family.name|first }}</span>
                 </div>
-                <h3 class="font-serif font-bold text-white group-hover:text-gold-400 transition-colors duration-500">{{ category.name }}</h3>
-                <p class="text-sm text-morris-400 mt-1.5 group-hover:text-morris-300 transition-colors duration-500">{{ category.product_count }} products</p>
+                <h3 class="font-serif font-bold text-white group-hover:text-gold-400 transition-colors duration-500">{{ family.name }}</h3>
+                <p class="text-sm text-morris-400 mt-1.5 group-hover:text-morris-300 transition-colors duration-500">{{ family.product_count }} products</p>
             </a>
             {% empty %}
             <div class="col-span-full text-center py-12 text-morris-400">
-                <p>No categories yet</p>
+                <p>No fragrance families yet</p>
             </div>
             {% endfor %}
         </div>
     </div>
 </section>
+
+{% if vouchers %}
+<section id="promo" class="py-20 lg:py-28 bg-gradient-to-b from-stone-900 to-[#1A1411]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-xl mx-auto mb-16">
+            <span class="text-amber-500 font-medium text-sm tracking-[0.2em] uppercase flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6h.008v.008H6V6z"></path>
+                </svg>
+                Promo Spesial
+            </span>
+            <h2 class="mt-4 text-3xl lg:text-4xl font-serif font-bold text-white">Promo & Voucher Aktif</h2>
+            <p class="mt-4 text-stone-400 leading-relaxed">Klaim voucher diskon eksklusif dan hemat belanja parfum favorit Anda</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {% for v in vouchers|slice:":3" %}
+            <div class="group relative bg-stone-800/40 backdrop-blur-sm rounded-2xl border border-stone-700/60 overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:border-amber-500/30
+                {% if forloop.first %}ring-1 ring-amber-500/30{% endif %}">
+                {% if forloop.first %}
+                <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-amber-500 to-amber-400"></div>
+                <div class="absolute top-3 right-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        Terpopuler
+                    </span>
+                </div>
+                {% endif %}
+
+                <div class="absolute top-0 right-0 w-40 h-40 -mr-10 -mt-10 rounded-full {% if v.discount_type == 'percentage' and v.discount_amount >= 50 %}bg-amber-500/10{% else %}bg-emerald-500/10{% endif %}"></div>
+
+                <div class="p-6 lg:p-8">
+                    <div class="flex items-center gap-2 mb-1">
+                        {% if v.voucher_type == 'welcome' %}
+                        <span class="text-[10px] font-bold text-indigo-400 bg-indigo-900/30 px-2 py-0.5 rounded-full border border-indigo-700/40">Baru</span>
+                        {% elif v.voucher_type == 'birthday' %}
+                        <span class="text-[10px] font-bold text-rose-400 bg-rose-900/30 px-2 py-0.5 rounded-full border border-rose-700/40">Ulang Tahun</span>
+                        {% endif %}
+                        <span class="text-xs font-bold text-amber-500/80 uppercase tracking-[0.15em]">{{ v.code }}</span>
+                    </div>
+                    <h3 class="text-2xl font-serif font-bold text-white mt-1">
+                        {% if v.discount_type == 'percentage' %}{{ v.discount_amount }}% OFF{% else %}{{ v.discount_amount|rupiah }}{% endif %}
+                    </h3>
+
+                    {% if v.description %}
+                    <p class="text-sm text-stone-400 mt-3 leading-relaxed">{{ v.description }}</p>
+                    {% endif %}
+
+                    <div class="mt-5 space-y-2.5 text-sm text-stone-400">
+                        {% if v.min_purchase %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Min. {{ v.min_purchase|rupiah }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% if v.expired_date %}<span>Berlaku sampai {{ v.expired_date|date:"d M Y" }}</span>{% else %}<span>Tanpa batas waktu</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        {% if user.is_authenticated and not user.is_superuser %}
+                            {% if v.id in user_claimed_voucher_ids %}
+                            <span class="flex items-center justify-center gap-2 w-full bg-emerald-900/30 text-emerald-400 text-sm font-medium py-3 px-5 rounded-xl border border-emerald-700/40 cursor-not-allowed">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Sudah Diklaim
+                            </span>
+                            {% else %}
+                            <a href="{% url 'promotions:claim_voucher' v.id %}"
+                                class="flex items-center justify-center gap-2 w-full bg-amber-600 hover:bg-amber-500 text-stone-900 font-semibold py-3 px-5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-[0.98]">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Klaim Voucher
+                            </a>
+                            {% endif %}
+                        {% elif user.is_superuser %}
+                            <span class="flex items-center justify-center gap-2 w-full bg-stone-700 text-stone-400 text-sm font-medium py-3 px-5 rounded-xl border border-stone-600 cursor-not-allowed">Mode Admin</span>
+                        {% else %}
+                            <a href="{% url 'accounts:login' %}?next={% url 'products:home' %}#promo"
+                                class="flex items-center justify-center gap-2 w-full bg-amber-600 hover:bg-amber-500 text-stone-900 font-semibold py-3 px-5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-[0.98]">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                                Masuk untuk Klaim
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-10">
+            <a href="{% url 'promotions:voucher_list' %}"
+                class="inline-flex items-center gap-2 text-sm font-medium text-stone-400 hover:text-amber-400 transition-colors group">
+                Lihat Semua Promo
+                <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
 
 {% comment %} Featured Products {% endcomment %}
 <section class="py-20 lg:py-28 bg-morris-900/30">
@@ -78,16 +193,19 @@
                 <h2 class="mt-4 text-3xl lg:text-4xl font-serif font-bold text-white">Featured Products</h2>
                 <p class="mt-3 text-morris-400">Our finest selection curated just for you</p>
             </div>
-            <a href="{% url 'products:list' %}" class="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-morris-400 hover:text-gold-400 transition-colors group">
+            <a href="{% url 'products:list' %}"
+                class="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-morris-400 hover:text-gold-400 transition-colors group">
                 View All
-                <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3">
+                    </path>
                 </svg>
             </a>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {% for product in featured_products %}
-                {% include 'includes/product_card.html' with product=product %}
+            {% include 'includes/product_card.html' with product=product %}
             {% empty %}
             <div class="col-span-full text-center py-12 text-morris-400">
                 <p>No products available</p>
@@ -95,10 +213,12 @@
             {% endfor %}
         </div>
         <div class="text-center mt-10 sm:hidden">
-            <a href="{% url 'products:list' %}" class="inline-flex items-center gap-2 text-sm font-medium text-gold-500 hover:text-gold-400 transition-colors">
+            <a href="{% url 'products:list' %}"
+                class="inline-flex items-center gap-2 text-sm font-medium text-gold-500 hover:text-gold-400 transition-colors">
                 View All Products
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3">
+                    </path>
                 </svg>
             </a>
         </div>
@@ -116,7 +236,7 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {% for product in new_products %}
-                {% include 'includes/product_card.html' with product=product %}
+            {% include 'includes/product_card.html' with product=product %}
             {% endfor %}
         </div>
     </div>
@@ -151,8 +271,10 @@
 <section class="py-20 lg:py-28 bg-morris-900/30">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <span class="text-gold-500 font-medium text-sm tracking-[0.2em] uppercase">Get Started</span>
-        <h2 class="mt-4 text-3xl lg:text-5xl font-serif font-bold text-white leading-tight">Ready to Find <span class="italic text-gold-400">Your</span> Scent?</h2>
-        <p class="mt-4 text-morris-400 max-w-lg mx-auto">Get your favorite fragrance now. Free delivery on your first purchase!</p>
+        <h2 class="mt-4 text-3xl lg:text-5xl font-serif font-bold text-white leading-tight">Ready to Find <span
+                class="italic text-gold-400">Your</span> Scent?</h2>
+        <p class="mt-4 text-morris-400 max-w-lg mx-auto">Get your favorite fragrance now. Free delivery on your first
+            purchase!</p>
         <div class="flex flex-wrap justify-center gap-4 mt-10">
             <a href="{% url 'products:list' %}"
                 class="bg-gold-600 hover:bg-gold-500 text-white font-medium px-10 py-4 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-[0.98]">

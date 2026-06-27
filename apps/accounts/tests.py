@@ -457,7 +457,7 @@ class TestCustomerAddressHierarchy:
         prov, city, _, dist, pc = self._setup_regions()
         form = CustomerAddressForm(data={
             'recipient_name': 'Test', 'phone': '08123456789',
-            'address_line': 'Jl. Test No. 1',
+            'address_line': 'Jl. Test No. 100',
             'province': prov.id, 'city': city.id,
             'district': dist.id, 'postal_code': pc.id,
         })
@@ -469,7 +469,7 @@ class TestCustomerAddressHierarchy:
         orphan_city = City.objects.create(code='1201', name='Orphan City', province=other_prov)
         form = CustomerAddressForm(data={
             'recipient_name': 'Test', 'phone': '08123456789',
-            'address_line': 'Jl. Test No. 1',
+            'address_line': 'Jl. Test No. 100',
             'province': prov.id, 'city': orphan_city.id,
             'district': dist.id, 'postal_code': pc.id,
         })
@@ -482,7 +482,7 @@ class TestCustomerAddressHierarchy:
         orphan_dist = District.objects.create(code='110301', name='Orphan District', city=other_city)
         form = CustomerAddressForm(data={
             'recipient_name': 'Test', 'phone': '08123456789',
-            'address_line': 'Jl. Test No. 1',
+            'address_line': 'Jl. Test No. 100',
             'province': prov.id, 'city': city.id,
             'district': orphan_dist.id, 'postal_code': pc.id,
         })
@@ -495,7 +495,7 @@ class TestCustomerAddressHierarchy:
         orphan_pc = PostalCode.objects.create(code='22222', district=other_dist)
         form = CustomerAddressForm(data={
             'recipient_name': 'Test', 'phone': '08123456789',
-            'address_line': 'Jl. Test No. 1',
+            'address_line': 'Jl. Test No. 100',
             'province': prov.id, 'city': city.id,
             'district': dist.id, 'postal_code': orphan_pc.id,
         })

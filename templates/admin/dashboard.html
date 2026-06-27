@@ -116,6 +116,66 @@
   </div>
 
   {# ═══════════════════════════════════════════
+     SECTION 2b: VOUCHER STATS (6 CARDS)
+     ═══════════════════════════════════════════ #}
+  <div class="row g-3 mb-4">
+    <div class="col-xl-2 col-md-4 col-12">
+      <div class="kpi-card" style="--accent:#F97316;">
+        <div class="kpi-label">Total Voucher Produk</div>
+        <div class="kpi-value mt-1">{{ voucher_stats.product.total }}</div>
+        <div class="kpi-footer">
+          <span class="kpi-period">{{ voucher_stats.product.active }} aktif</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-12">
+      <div class="kpi-card" style="--accent:#0EA5E9;">
+        <div class="kpi-label">Total Voucher Ongkir</div>
+        <div class="kpi-value mt-1">{{ voucher_stats.shipping.total }}</div>
+        <div class="kpi-footer">
+          <span class="kpi-period">{{ voucher_stats.shipping.active }} aktif</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-12">
+      <div class="kpi-card" style="--accent:#F97316;">
+        <div class="kpi-label">Voucher Produk Aktif</div>
+        <div class="kpi-value mt-1">{{ voucher_stats.product.active }}</div>
+        <div class="kpi-footer">
+          <span class="kpi-period">dari {{ voucher_stats.product.total }} total</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-12">
+      <div class="kpi-card" style="--accent:#0EA5E9;">
+        <div class="kpi-label">Voucher Ongkir Aktif</div>
+        <div class="kpi-value mt-1">{{ voucher_stats.shipping.active }}</div>
+        <div class="kpi-footer">
+          <span class="kpi-period">dari {{ voucher_stats.shipping.total }} total</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-12">
+      <div class="kpi-card" style="--accent:#F97316;">
+        <div class="kpi-label">Voucher Produk Terpakai</div>
+        <div class="kpi-value mt-1">{{ voucher_stats.product.used }}</div>
+        <div class="kpi-footer">
+          <span class="kpi-period">total terpakai</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-12">
+      <div class="kpi-card" style="--accent:#0EA5E9;">
+        <div class="kpi-label">Voucher Ongkir Terpakai</div>
+        <div class="kpi-value mt-1">{{ voucher_stats.shipping.used }}</div>
+        <div class="kpi-footer">
+          <span class="kpi-period">total terpakai</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ═══════════════════════════════════════════
      SECTION 3: MAIN ANALYTICS (8 + 4)
      ═══════════════════════════════════════════ #}
   <div class="row g-3 mb-4">

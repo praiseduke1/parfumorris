@@ -85,6 +85,15 @@ def admin_client(admin_user):
     return client
 
 @pytest.fixture
+def location():
+    from apps.regions.models import Province, City, District, PostalCode
+    prov = Province.objects.create(id=1, name='DKI Jakarta')
+    city = City.objects.create(id=1, name='Jakarta Pusat', province=prov)
+    dist = District.objects.create(id=1, name='Menteng', city=city)
+    pc = PostalCode.objects.create(id=1, code='12345', district=dist)
+    return {'province': prov, 'city': city, 'district': dist, 'postal_code': pc}
+
+@pytest.fixture
 def seeded_product(product, category):
     """Add fragrance notes, families, and variants to product"""
     top = FragranceNote.objects.create(name='Bergamot', note_type='TOP', slug='bergamot')
@@ -744,15 +753,17 @@ class TestCheckout:
         resp = logged_client.get(reverse('orders:create'))
         assert resp.status_code == 200
 
-    def test_checkout_submit_creates_order(self, logged_client, customer, product):
+    def test_checkout_submit_creates_order(self, logged_client, customer, product, location):
         cart = Cart.objects.create(user=customer)
         CartItem.objects.create(cart=cart, product=product, quantity=2)
         resp = logged_client.post(reverse('orders:create'), {
             'recipient_name': 'Budi',
             'phone': '08123456789',
             'shipping_address': 'Jl. Merdeka No. 10, Jakarta Pusat',
-            'city': 'Jakarta',
-            'postal_code': '12345',
+            'province': location['province'].id,
+            'city': location['city'].id,
+            'district': location['district'].id,
+            'postal_code': location['postal_code'].id,
         })
         assert resp.status_code == 302
         order = Order.objects.filter(user=customer).first()
@@ -760,45 +771,53 @@ class TestCheckout:
         assert order.items.count() == 1
         assert order.items.first().quantity == 2
 
-    def test_checkout_submit_clears_cart(self, logged_client, customer, product):
+    def test_checkout_submit_clears_cart(self, logged_client, customer, product, location):
         cart = Cart.objects.create(user=customer)
         CartItem.objects.create(cart=cart, product=product, quantity=1)
         logged_client.post(reverse('orders:create'), {
             'recipient_name': 'Budi', 'phone': '08123456789',
-            'shipping_address': 'Jl. Test No. 123', 'city': 'Jakarta', 'postal_code': '12345',
+            'shipping_address': 'Jl. Test No. 123',
+            'province': location['province'].id, 'city': location['city'].id,
+            'district': location['district'].id, 'postal_code': location['postal_code'].id,
         })
         cart.refresh_from_db()
         assert cart.items.count() == 0
 
-    def test_checkout_snapshot_preserves_product_name(self, logged_client, customer, product):
+    def test_checkout_snapshot_preserves_product_name(self, logged_client, customer, product, location):
         cart = Cart.objects.create(user=customer)
         CartItem.objects.create(cart=cart, product=product, quantity=1)
         logged_client.post(reverse('orders:create'), {
             'recipient_name': 'Budi', 'phone': '08123456789',
-            'shipping_address': 'Jl. Test No. 123', 'city': 'Jakarta', 'postal_code': '12345',
+            'shipping_address': 'Jl. Test No. 123',
+            'province': location['province'].id, 'city': location['city'].id,
+            'district': location['district'].id, 'postal_code': location['postal_code'].id,
         })
         order = Order.objects.filter(user=customer).first()
         assert order.items.first().product_name == product.name
         assert order.items.first().price == product.price
 
-    def test_checkout_insufficient_stock_redirects(self, logged_client, customer, product):
+    def test_checkout_insufficient_stock_redirects(self, logged_client, customer, product, location):
         product.stock = 1
         product.save()
         cart = Cart.objects.create(user=customer)
         CartItem.objects.create(cart=cart, product=product, quantity=5)
         resp = logged_client.post(reverse('orders:create'), {
             'recipient_name': 'Budi', 'phone': '08123456789',
-            'shipping_address': 'Jl. Test No. 123', 'city': 'Jakarta', 'postal_code': '12345',
+            'shipping_address': 'Jl. Test No. 123',
+            'province': location['province'].id, 'city': location['city'].id,
+            'district': location['district'].id, 'postal_code': location['postal_code'].id,
         })
         assert resp.status_code == 302
         assert '/cart/' in resp.url
 
-    def test_checkout_creates_status_history(self, logged_client, customer, product):
+    def test_checkout_creates_status_history(self, logged_client, customer, product, location):
         cart = Cart.objects.create(user=customer)
         CartItem.objects.create(cart=cart, product=product, quantity=1)
         logged_client.post(reverse('orders:create'), {
             'recipient_name': 'Budi', 'phone': '08123456789',
-            'shipping_address': 'Jl. Test No. 123', 'city': 'Jakarta', 'postal_code': '12345',
+            'shipping_address': 'Jl. Test No. 123',
+            'province': location['province'].id, 'city': location['city'].id,
+            'district': location['district'].id, 'postal_code': location['postal_code'].id,
         })
         order = Order.objects.filter(user=customer).first()
         assert order.status_history.count() == 1
@@ -827,7 +846,7 @@ class TestVoucher:
         assert 'FLAT50' in content
         assert '50.000' in content
 
-    def test_voucher_discount_applied_to_order(self, logged_client, customer, product):
+    def test_voucher_discount_applied_to_order(self, logged_client, customer, product, location):
         cart = Cart.objects.create(user=customer)
         CartItem.objects.create(cart=cart, product=product, quantity=1)
         OrderVoucher.objects.create(
@@ -838,7 +857,9 @@ class TestVoucher:
         logged_client.post(reverse('carts:apply_voucher'), {'code': 'DISKON20'})
         logged_client.post(reverse('orders:create'), {
             'recipient_name': 'Budi', 'phone': '08123456789',
-            'shipping_address': 'Jl. Test No. 123', 'city': 'Jakarta', 'postal_code': '12345',
+            'shipping_address': 'Jl. Test No. 123',
+            'province': location['province'].id, 'city': location['city'].id,
+            'district': location['district'].id, 'postal_code': location['postal_code'].id,
         })
         order = Order.objects.filter(user=customer).first()
         assert order.discount_amount > 0
@@ -860,7 +881,7 @@ class TestVoucher:
         content = resp.content.decode('utf-8')
         assert 'MYVOUCH' in content
 
-    def test_user_voucher_consumed_on_order(self, logged_client, customer, product):
+    def test_user_voucher_consumed_on_order(self, logged_client, customer, product, location):
         cart = Cart.objects.create(user=customer)
         CartItem.objects.create(cart=cart, product=product, quantity=1)
         promo_v = PromoVoucher.objects.get_or_create(
@@ -875,7 +896,9 @@ class TestVoucher:
         )
         logged_client.post(reverse('orders:create'), {
             'recipient_name': 'Budi', 'phone': '08123456789',
-            'shipping_address': 'Jl. Test No. 123', 'city': 'Jakarta', 'postal_code': '12345',
+            'shipping_address': 'Jl. Test No. 123',
+            'province': location['province'].id, 'city': location['city'].id,
+            'district': location['district'].id, 'postal_code': location['postal_code'].id,
             'user_voucher_id': uv.id,
         })
         uv.refresh_from_db()
@@ -1207,9 +1230,9 @@ class TestRolePermission:
         resp = admin_client.get(reverse('accounts:address_list'))
         assert resp.status_code == 302
 
-    def test_superuser_blocked_from_vouchers(self, admin_client):
+    def test_superuser_can_view_vouchers(self, admin_client):
         resp = admin_client.get(reverse('promotions:voucher_list'))
-        assert resp.status_code == 302
+        assert resp.status_code == 200
 
     def test_superuser_blocked_from_payment(self, admin_client, customer):
         order = Order.objects.create(user=customer, total_price=100000)

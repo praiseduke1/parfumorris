@@ -30,3 +30,9 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+logs/
+
+# Emails
+emails/

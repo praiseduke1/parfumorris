@@ -8,6 +8,11 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
+from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
+
+from django.db.models import Q
+from django.utils.timezone import now
 
 from apps.core.decorators import customer_required
 from apps.core.mixins import CustomerRequiredMixin
@@ -41,6 +46,21 @@ def dashboard(request):
     except AttributeError:
         profile = None
 
+    from apps.promotions.models import UserVoucher
+    voucher_available = UserVoucher.objects.filter(
+        user=request.user, status=UserVoucher.Status.AVAILABLE,
+        expires_at__gt=now(),
+    ).count()
+    voucher_used = UserVoucher.objects.filter(
+        user=request.user, status=UserVoucher.Status.USED,
+    ).count()
+    voucher_expired = UserVoucher.objects.filter(
+        user=request.user,
+    ).filter(
+        Q(status=UserVoucher.Status.EXPIRED) |
+        Q(status=UserVoucher.Status.AVAILABLE, expires_at__lte=now())
+    ).count()
+
     context = {
         'orders': orders,
         'order_count': order_count,
@@ -49,6 +69,9 @@ def dashboard(request):
         'cancelled_count': cancelled_count,
         'in_progress_count': in_progress_count,
         'profile': profile,
+        'voucher_available': voucher_available,
+        'voucher_used': voucher_used,
+        'voucher_expired': voucher_expired,
     }
     return render(request, 'accounts/dashboard.html', context)
 
@@ -99,7 +122,7 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def dispatch(self, request, *args, **kwargs):
-        logger.warning(
+        logger.debug(
             f"LOGIN PAGE — user={request.user.id} "
             f"username={request.user.username} "
             f"superuser={request.user.is_superuser} "
@@ -109,7 +132,7 @@ class CustomLoginView(LoginView):
 
     def form_valid(self, form):
         user = form.get_user()
-        logger.warning(
+        logger.debug(
             f"LOGIN SUCCESS — logging in as user={user.id} "
             f"username={user.username} superuser={user.is_superuser} "
             f"session_key={self.request.session.session_key}"
@@ -118,7 +141,7 @@ class CustomLoginView(LoginView):
 
     def get_success_url(self):
         next_url = self.request.POST.get('next') or self.request.GET.get('next')
-        if next_url:
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             return next_url
         return reverse_lazy('products:list')
 
@@ -129,8 +152,9 @@ class CustomLoginView(LoginView):
         return context
 
 
+@require_POST
 def logout_view(request):
-    logger.warning(
+    logger.debug(
         f"LOGOUT — user={request.user.id} "
         f"username={request.user.username} superuser={request.user.is_superuser} "
         f"session_key={request.session.session_key}"
@@ -183,6 +207,7 @@ def wishlist_list(request):
 
 @login_required
 @customer_required
+@require_POST
 def wishlist_add(request, product_id):
     product = get_object_or_404(Product, id=product_id, is_available=True)
 
@@ -204,6 +229,7 @@ def wishlist_add(request, product_id):
 
 @login_required
 @customer_required
+@require_POST
 def wishlist_remove(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
@@ -290,6 +316,7 @@ def address_edit(request, address_id):
 
 @login_required
 @customer_required
+@require_POST
 def address_delete(request, address_id):
     address = get_object_or_404(CustomerAddress, id=address_id, user=request.user)
     address.delete()
@@ -299,6 +326,7 @@ def address_delete(request, address_id):
 
 @login_required
 @customer_required
+@require_POST
 def address_set_default(request, address_id):
     address = get_object_or_404(CustomerAddress, id=address_id, user=request.user)
     CustomerAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)

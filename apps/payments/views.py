@@ -18,7 +18,7 @@ from .models import Payment
 from .midtrans import create_transaction, get_transaction_status, verify_signature
 from apps.accounts.models import MemberProfile
 from apps.orders.models import Order, OrderItem
-from apps.products.models import Product
+from apps.products.models import Product, ProductVariant
 
 
 ORDER_ID_PREFIX = 'ORDER-'
@@ -94,10 +94,14 @@ def _process_successful_payment(payment, order, status_data):
         order.save()
 
         if not was_paid_before:
-            for item in OrderItem.objects.filter(order=order):
+            for item in OrderItem.objects.filter(order=order).select_related('variant'):
                 Product.objects.filter(id=item.product_id).update(
                     stock=F('stock') - item.quantity
                 )
+                if item.variant:
+                    ProductVariant.objects.filter(id=item.variant_id).update(
+                        stock=F('stock') - item.quantity
+                    )
             try:
                 member = MemberProfile.objects.get(user=order.user)
                 member.total_spending += order.total_price

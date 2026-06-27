@@ -1,9 +1,12 @@
+import logging
 import re
 
 from django import forms
 
 from apps.regions.models import City, District, PostalCode, Province
 from .models import Order
+
+logger = logging.getLogger(__name__)
 
 INPUT_CLASS = 'w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 text-sm text-stone-700 placeholder:text-stone-400 transition-all'
 
@@ -14,31 +17,39 @@ class CheckoutForm(forms.ModelForm):
         widget=forms.Select(attrs={
             'class': INPUT_CLASS,
             'data-url': '/api/locations/cities/',
+            'data-placeholder': 'Pilih Provinsi',
+            'aria-label': 'Provinsi',
         }),
-        required=False,
+        error_messages={'required': 'Provinsi wajib dipilih.'},
     )
     city = forms.ModelChoiceField(
         queryset=City.objects.none(),
         widget=forms.Select(attrs={
             'class': INPUT_CLASS,
             'data-url': '/api/locations/districts/',
+            'data-placeholder': 'Pilih Kota/Kabupaten',
+            'aria-label': 'Kota/Kabupaten',
         }),
-        required=False,
+        error_messages={'required': 'Kota/Kabupaten wajib dipilih.'},
     )
     district = forms.ModelChoiceField(
         queryset=District.objects.none(),
         widget=forms.Select(attrs={
             'class': INPUT_CLASS,
             'data-url': '/api/locations/postal-code/',
+            'data-placeholder': 'Pilih Kecamatan',
+            'aria-label': 'Kecamatan',
         }),
-        required=False,
+        error_messages={'required': 'Kecamatan wajib dipilih.'},
     )
     postal_code = forms.ModelChoiceField(
         queryset=PostalCode.objects.none(),
         widget=forms.Select(attrs={
             'class': INPUT_CLASS,
+            'data-placeholder': 'Pilih Kode Pos',
+            'aria-label': 'Kode Pos',
         }),
-        required=False,
+        error_messages={'required': 'Kode Pos wajib dipilih.'},
     )
 
     class Meta:
@@ -65,13 +76,19 @@ class CheckoutForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         def parent_val(name):
-            if self.is_bound:
-                return self.data.get(name)
-            return self.initial.get(name)
+            raw = self.data.get(name) if self.is_bound else self.initial.get(name)
+            if raw is None or raw == '':
+                return None
+            try:
+                return int(raw)
+            except (ValueError, TypeError):
+                return None
 
         province_id = parent_val('province')
         city_id = parent_val('city')
         district_id = parent_val('district')
+
+        logger.debug('CheckoutForm: province=%s city=%s district=%s', province_id, city_id, district_id)
 
         if province_id:
             self.fields['city'].queryset = City.objects.filter(province_id=province_id)
@@ -96,6 +113,14 @@ class CheckoutForm(forms.ModelForm):
         district = cleaned.get('district')
         postal_code = cleaned.get('postal_code')
 
+        logger.debug(
+            'CheckoutForm.clean: province=%s city=%s district=%s postal_code=%s',
+            province.pk if province else None,
+            city.pk if city else None,
+            district.pk if district else None,
+            postal_code.pk if postal_code else None,
+        )
+
         if city and province and city.province_id != province.id:
             self.add_error('city', 'Kota/kabupaten tidak sesuai dengan provinsi yang dipilih.')
         if district and city and district.city_id != city.id:
@@ -115,9 +140,11 @@ class CheckoutForm(forms.ModelForm):
         order = super().save(commit=False)
         province = self.cleaned_data.get('province')
         city = self.cleaned_data.get('city')
+        district = self.cleaned_data.get('district')
         postal_code = self.cleaned_data.get('postal_code')
         order.province = province.name if province else ''
         order.city = city.name if city else ''
+        order.district = district.name if district else ''
         order.postal_code = postal_code.code if postal_code else ''
         if commit:
             order.save()

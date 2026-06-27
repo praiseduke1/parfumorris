@@ -53,21 +53,28 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ['order_number', 'user_link', 'status_badge', 'total_price_formatted', 'item_count', 'created_at']
     list_filter = ['status', 'created_at']
     search_fields = ['order_number', 'user__username', 'user__email']
-    autocomplete_fields = ['user', 'voucher']
+    autocomplete_fields = ['user', 'voucher', 'product_voucher', 'shipping_voucher']
     inlines = [OrderItemInline, OrderStatusHistoryInline]
+    list_select_related = ['user', 'voucher', 'product_voucher', 'shipping_voucher']
     date_hierarchy = 'created_at'
     ordering = ['-created_at']
-    readonly_fields = ['order_number', 'subtotal', 'discount_amount', 'total_price', 'created_at', 'updated_at',
+    readonly_fields = ['order_number', 'subtotal', 'discount_amount', 'product_discount', 'shipping_discount',
+                       'shipping_cost', 'total_price', 'created_at', 'updated_at',
                        'paid_at', 'processing_at', 'shipped_at', 'delivered_at', 'completed_at']
     actions = ['mark_as_paid', 'mark_as_processing', 'mark_as_shipped', 'mark_as_delivered', 'mark_as_completed', 'mark_as_cancelled']
 
     fieldsets = (
         ('Informasi Pesanan', {
-            'fields': ('order_number', 'user', 'status', 'voucher', 'subtotal', 'discount_amount', 'total_price')
+            'fields': ('order_number', 'user', 'status', 'voucher', 'product_voucher', 'shipping_voucher',
+                       'subtotal', 'discount_amount', 'product_discount', 'shipping_discount',
+                       'shipping_cost', 'total_price')
         }),
         ('Alamat Pengiriman', {
-            'fields': ('recipient_name', 'phone', 'shipping_address', 'city', 'province', 'postal_code', 'notes'),
+            'fields': ('recipient_name', 'phone', 'shipping_address', 'city', 'province', 'district', 'postal_code', 'notes'),
             'classes': ('collapse',)
+        }),
+        ('Informasi Pengiriman', {
+            'fields': ('shipping_courier', 'shipping_service', 'shipping_estimation', 'shipping_weight', 'shipping_origin', 'shipping_destination', 'tracking_number'),
         }),
         ('Waktu Status', {
             'fields': ('paid_at', 'processing_at', 'shipped_at', 'delivered_at', 'completed_at'),

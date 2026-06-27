@@ -55,21 +55,22 @@
 - [x] Update quantity (increase, decrease, set)
 - [x] Remove item dari cart
 - [x] Cart summary di navbar
-- [x] Voucher input/apply/remove di halaman cart
+- [x] Voucher code input di cart dihapus — pindah ke checkout modal
 
 ### Orders
 - [x] Checkout form dengan pre-fill dari profile + discount breakdown
+- [x] Checkout section reorder: Alamat → Penerima → Kurir → Layanan → Voucher Ongkir → Daftar Produk → Voucher Produk → Catatan → Ringkasan → Bayar
 - [x] Order creation dengan snapshot produk + variant
 - [x] Order list per user
 - [x] Order detail
 - [x] Cancel order (hanya status PENDING_PAYMENT)
 - [x] Status management (PENDING_PAYMENT → PAID → PROCESSING → SHIPPED → DELIVERED)
 - [x] Order tracking page dengan timeline visual
-- [x] Voucher integration (session-based code + UserVoucher selection)
+- [x] Voucher integration: product & shipping voucher terpisah, modal selection, realtime recalculation
 
 ### Payment
-- [x] Integrasi Midtrans Snap API
-- [x] Generate Snap token
+- [x] Integrasi Midtrans Snap API dengan 15s timeout
+- [x] Generate Snap token (termasuk SHIPPING item agar gross_amount match)
 - [x] Snap.js popup payment
 - [x] Payment success/pending/error pages
 - [x] Notification callback handler (CSRF Exempt)
@@ -96,11 +97,13 @@
 - [x] Server-side validation di semua view customer
 
 ### Promotions
-- [x] Voucher model (promotions) — kode, tipe diskon, min purchase, expiry
+- [x] Voucher model (promotions) — kode, tipe diskon, min purchase, expiry, category (PRODUCT / SHIPPING)
 - [x] UserVoucher — per-user assignment with individual expiry
 - [x] WELCOME10 auto-assignment (10%, min Rp 200k, 30 days validity)
 - [x] Customer voucher list at `/accounts/vouchers/`
-- [x] Checkout integration with UserVoucher selection (precedence over global voucher)
+- [x] Checkout integration: modal per-category, API select/remove, realtime recalculation
+- [x] Separate discount functions: `calculate_product_discount()`, `calculate_shipping_discount()`, `calculate_total()`
+- [x] Session keys terpisah: `product_voucher_id`, `shipping_voucher_id`
 
 ---
 
@@ -115,7 +118,8 @@
 - [ ] Stock notification (notifikasi saat produk tersedia kembali)
 
 ### Order & Shipping
-- [ ] Shipping cost calculation (RajaOngkir API integration)
+- [x] Shipping cost calculation (RajaOngkir Komerce API, fallback dummy di dev mode)
+- [x] 2-step courier selection: Pilih Kurir → Pilih Layanan
 - [ ] Invoice PDF generation
 - [ ] Order cancellation request (dengan alasan)
 - [ ] Export orders ke CSV/Excel

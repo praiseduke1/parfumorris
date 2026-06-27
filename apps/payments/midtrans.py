@@ -1,14 +1,44 @@
 import hashlib
+import time
 
+import requests
 import midtransclient
 from django.conf import settings
 
 
+MIDTRANS_TIMEOUT = 15
+
+
+class _TimeoutRequests:
+    """Wrapper that injects a default timeout into requests made by midtransclient."""
+
+    def request(self, method, url, **kwargs):
+        kwargs.setdefault('timeout', MIDTRANS_TIMEOUT)
+        return requests.request(method, url, **kwargs)
+
+
 def get_snap():
-    return midtransclient.Snap(
+    snap = midtransclient.Snap(
         is_production=settings.MIDTRANS_IS_PRODUCTION,
         server_key=settings.MIDTRANS_SERVER_KEY,
     )
+    snap.http_client.http_client = _TimeoutRequests()
+    return snap
+
+
+MIDTRANS_RETRIES = 3
+MIDTRANS_RETRY_DELAY = 1
+
+
+def _retry_request(fn, *args, **kwargs):
+    for attempt in range(MIDTRANS_RETRIES):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            if attempt < MIDTRANS_RETRIES - 1:
+                time.sleep(MIDTRANS_RETRY_DELAY * (2 ** attempt))
+                continue
+            raise
 
 
 def create_transaction(order):
@@ -30,6 +60,15 @@ def create_transaction(order):
             'price': -discount_amount,
             'quantity': 1,
             'name': 'Diskon Voucher',
+        })
+
+    shipping_cost = int(order.shipping_cost)
+    if shipping_cost > 0:
+        item_details.append({
+            'id': 'SHIPPING',
+            'price': shipping_cost,
+            'quantity': 1,
+            'name': 'Ongkos Kirim',
         })
 
     param = {
@@ -57,13 +96,13 @@ def create_transaction(order):
         },
     }
 
-    transaction = snap.create_transaction(param)
+    transaction = _retry_request(snap.create_transaction, param)
     return transaction
 
 
 def get_transaction_status(order):
     snap = get_snap()
-    status = snap.transactions.status(f'ORDER-{order.midtrans_order_id}')
+    status = _retry_request(snap.transactions.status, f'ORDER-{order.midtrans_order_id}')
     return status
 
 

@@ -53,6 +53,16 @@
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-amber-600 group-hover:w-full transition-all duration-300"></span>
                     </a>
 
+                    <a href="{% url 'promotions:voucher_list' %}" class="relative p-2 text-stone-400 hover:text-amber-400 transition-colors" title="Voucher Saya">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 6h.008v.008H6V6z"></path>
+                        </svg>
+                        {% if unclaimed_vouchers_count > 0 %}
+                        <span class="absolute -top-0.5 -right-0.5 bg-emerald-500 text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center leading-none min-w-[18px] min-h-[18px]">{{ unclaimed_vouchers_count }}</span>
+                        {% endif %}
+                    </a>
+
                     <a href="{% url 'carts:detail' %}" class="relative p-2 text-stone-400 hover:text-amber-400 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path>
@@ -74,6 +84,7 @@
                         <div class="absolute right-0 mt-2 w-52 bg-stone-800 rounded-xl shadow-lg border border-stone-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-1 group-hover:translate-y-0">
                             <div class="p-2">
                                 <a href="{% url 'accounts:dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 text-sm text-stone-300 hover:text-stone-100 hover:bg-stone-700 rounded-lg transition">Dashboard</a>
+                                <a href="{% url 'promotions:my_vouchers' %}" class="flex items-center gap-3 px-3 py-2.5 text-sm text-stone-300 hover:text-stone-100 hover:bg-stone-700 rounded-lg transition">Voucher Saya{% if unclaimed_vouchers_count %} <span class="bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ unclaimed_vouchers_count }}</span>{% endif %}</a>
                                 <a href="{% url 'accounts:profile' %}" class="flex items-center gap-3 px-3 py-2.5 text-sm text-stone-300 hover:text-stone-100 hover:bg-stone-700 rounded-lg transition">Profil</a>
                                 {% if user.is_superuser %}
                                 <hr class="my-1 border-stone-700">
@@ -93,6 +104,15 @@
 
             {% if user.is_authenticated and not user.is_superuser %}
             <div class="flex md:hidden items-center gap-2">
+                <a href="{% url 'promotions:voucher_list' %}" class="relative p-2 text-stone-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 6h.008v.008H6V6z"></path>
+                    </svg>
+                    {% if unclaimed_vouchers_count > 0 %}
+                    <span class="absolute -top-0.5 -right-0.5 bg-emerald-500 text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center leading-none min-w-[18px] min-h-[18px]">{{ unclaimed_vouchers_count }}</span>
+                    {% endif %}
+                </a>
                 <a href="{% url 'carts:detail' %}" class="relative p-2 text-stone-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path>
@@ -136,6 +156,7 @@
                 <a href="{% url 'accounts:logout' %}" class="block px-3 py-2.5 text-sm font-medium text-rose-400 hover:bg-stone-800/50 rounded-lg transition">Logout</a>
                 {% else %}
                 <a href="{% url 'accounts:dashboard' %}" class="block px-3 py-2.5 text-sm font-medium text-stone-300 hover:bg-stone-800/50 rounded-lg transition">Dashboard</a>
+                <a href="{% url 'promotions:my_vouchers' %}" class="flex items-center justify-between px-3 py-2.5 text-sm font-medium text-stone-300 hover:bg-stone-800/50 rounded-lg transition">Voucher Saya{% if unclaimed_vouchers_count %} <span class="bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ unclaimed_vouchers_count }}</span>{% endif %}</a>
                 <a href="{% url 'accounts:profile' %}" class="block px-3 py-2.5 text-sm font-medium text-stone-300 hover:bg-stone-800/50 rounded-lg transition">Profil</a>
                 {% if user.is_superuser %}
                 <a href="{% url 'admin:index' %}" class="block px-3 py-2.5 text-sm font-medium text-stone-300 hover:bg-stone-800/50 rounded-lg transition">Admin Panel</a>

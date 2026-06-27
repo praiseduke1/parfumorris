@@ -26,6 +26,8 @@
         </div>
 
         <div class="lg:col-span-3">
+            <div class="cascade-error-container"></div>
+
             {% if messages %}
             <div class="mb-6 space-y-3">
                 {% for message in messages %}
@@ -43,93 +45,185 @@
                     {% csrf_token %}
 
                     {% if form.non_field_errors %}
-                    <div class="mb-6 p-4 bg-rose-50 rounded-xl text-sm text-rose-600">{{ form.non_field_errors.0 }}</div>
+                    <div class="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">
+                        {{ form.non_field_errors.0 }}
+                    </div>
                     {% endif %}
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Label Alamat</label>
-                            {{ form.label }}
-                            <p class="text-xs text-stone-400 mt-1">Contoh: Rumah, Kantor, Kos</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Nama Penerima <span class="text-rose-500">*</span></label>
+                            <label for="{{ form.recipient_name.id_for_label }}"
+                                class="block text-sm font-medium text-stone-700 mb-1.5">
+                                Nama Penerima <span class="text-rose-500">*</span>
+                            </label>
                             {{ form.recipient_name }}
                             {% if form.recipient_name.errors %}
-                            <p class="text-sm text-rose-500 mt-1">{{ form.recipient_name.errors.0 }}</p>
+                            <p class="text-sm text-rose-500 mt-1.5 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ form.recipient_name.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Nomor Telepon <span class="text-rose-500">*</span></label>
+                            <label for="{{ form.phone.id_for_label }}"
+                                class="block text-sm font-medium text-stone-700 mb-1.5">
+                                Nomor HP <span class="text-rose-500">*</span>
+                            </label>
                             {{ form.phone }}
                             {% if form.phone.errors %}
-                            <p class="text-sm text-rose-500 mt-1">{{ form.phone.errors.0 }}</p>
+                            <p class="text-sm text-rose-500 mt-1.5 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ form.phone.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                     </div>
 
                     <div class="mt-5">
-                        <label class="block text-sm font-medium text-stone-700 mb-1.5">Alamat Lengkap <span class="text-rose-500">*</span></label>
+                        <label for="{{ form.address_line.id_for_label }}"
+                            class="block text-sm font-medium text-stone-700 mb-1.5">
+                            Alamat Lengkap <span class="text-rose-500">*</span>
+                        </label>
                         {{ form.address_line }}
                         {% if form.address_line.errors %}
-                        <p class="text-sm text-rose-500 mt-1">{{ form.address_line.errors.0 }}</p>
+                        <p class="text-sm text-rose-500 mt-1.5 flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            {{ form.address_line.errors.0 }}
+                        </p>
                         {% endif %}
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mt-5">
+                    <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Provinsi <span class="text-rose-500">*</span></label>
+                            <label for="{{ form.province.id_for_label }}"
+                                class="block text-sm font-medium text-stone-700 mb-1.5">
+                                Provinsi <span class="text-rose-500">*</span>
+                            </label>
                             {{ form.province }}
                             {% if form.province.errors %}
-                            <p class="text-sm text-rose-500 mt-1">{{ form.province.errors.0 }}</p>
+                            <p class="text-sm text-rose-500 mt-1.5 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ form.province.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Kota <span class="text-rose-500">*</span></label>
+                            <label for="{{ form.city.id_for_label }}"
+                                class="block text-sm font-medium text-stone-700 mb-1.5">
+                                Kota/Kabupaten <span class="text-rose-500">*</span>
+                            </label>
                             {{ form.city }}
                             {% if form.city.errors %}
-                            <p class="text-sm text-rose-500 mt-1">{{ form.city.errors.0 }}</p>
+                            <p class="text-sm text-rose-500 mt-1.5 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ form.city.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Kecamatan <span class="text-rose-500">*</span></label>
+                            <label for="{{ form.district.id_for_label }}"
+                                class="block text-sm font-medium text-stone-700 mb-1.5">
+                                Kecamatan <span class="text-rose-500">*</span>
+                            </label>
                             {{ form.district }}
                             {% if form.district.errors %}
-                            <p class="text-sm text-rose-500 mt-1">{{ form.district.errors.0 }}</p>
+                            <p class="text-sm text-rose-500 mt-1.5 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ form.district.errors.0 }}
+                            </p>
                             {% endif %}
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Kode Pos <span class="text-rose-500">*</span></label>
+                            <label for="{{ form.postal_code.id_for_label }}"
+                                class="block text-sm font-medium text-stone-700 mb-1.5">
+                                Kode Pos <span class="text-rose-500">*</span>
+                            </label>
                             {{ form.postal_code }}
                             {% if form.postal_code.errors %}
-                            <p class="text-sm text-rose-500 mt-1">{{ form.postal_code.errors.0 }}</p>
+                            <p class="text-sm text-rose-500 mt-1.5 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ form.postal_code.errors.0 }}
+                            </p>
                             {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-                        <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Latitude (opsional)</label>
-                            {{ form.latitude }}
-                            <p class="text-xs text-stone-400 mt-1">Untuk integrasi pengiriman</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1.5">Longitude (opsional)</label>
-                            {{ form.longitude }}
-                            <p class="text-xs text-stone-400 mt-1">Untuk integrasi pengiriman</p>
                         </div>
                     </div>
 
                     <div class="mt-6 flex items-center gap-3">
-                        <label class="flex items-center gap-2 cursor-pointer">
+                        <label for="{{ form.is_default.id_for_label }}" class="flex items-center gap-2.5 cursor-pointer group">
                             {{ form.is_default }}
-                            <span class="text-sm font-medium text-stone-700">Jadikan alamat utama</span>
+                            <span class="text-sm font-medium text-stone-700 group-hover:text-stone-900 transition">Jadikan alamat utama</span>
                         </label>
                     </div>
-
                     {% if form.is_default.errors %}
-                    <p class="text-sm text-rose-500 mt-1">{{ form.is_default.errors.0 }}</p>
+                    <p class="text-sm text-rose-500 mt-1.5">{{ form.is_default.errors.0 }}</p>
                     {% endif %}
+
+                    <div class="mt-6">
+                        <button type="button" id="advancedToggle"
+                            class="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-700 transition font-medium"
+                            aria-expanded="false">
+                            <svg class="chevron-icon w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            Pengaturan Lanjutan (Opsional)
+                        </button>
+                        <div id="advancedContent" class="hidden mt-4 p-4 bg-stone-50 rounded-xl border border-stone-200">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="{{ form.label.id_for_label }}"
+                                        class="block text-sm font-medium text-stone-600 mb-1.5">Label Alamat</label>
+                                    {{ form.label }}
+                                </div>
+                                <div>
+                                    <label for="{{ form.rt.id_for_label }}"
+                                        class="block text-sm font-medium text-stone-600 mb-1.5">RT</label>
+                                    {{ form.rt }}
+                                </div>
+                                <div>
+                                    <label for="{{ form.rw.id_for_label }}"
+                                        class="block text-sm font-medium text-stone-600 mb-1.5">RW</label>
+                                    {{ form.rw }}
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="{{ form.latitude.id_for_label }}"
+                                        class="block text-sm font-medium text-stone-600 mb-1.5">Latitude</label>
+                                    {{ form.latitude }}
+                                </div>
+                                <div>
+                                    <label for="{{ form.longitude.id_for_label }}"
+                                        class="block text-sm font-medium text-stone-600 mb-1.5">Longitude</label>
+                                    {{ form.longitude }}
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <button type="button" id="geoLocationBtn"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-sm font-medium rounded-xl transition-all duration-200 active:scale-[0.98]">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    Gunakan Lokasi Saya
+                                </button>
+                                <p class="text-xs text-stone-400 mt-2">Isi otomatis alamat dan koordinat menggunakan lokasi Anda saat ini.</p>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="mt-8 flex items-center gap-4">
                         <button type="submit"
@@ -137,7 +231,7 @@
                             Simpan Alamat
                         </button>
                         <a href="{% url 'accounts:address_list' %}"
-                            class="text-sm text-stone-500 hover:text-stone-700 font-medium">
+                            class="text-sm text-stone-500 hover:text-stone-700 font-medium transition">
                             Batal
                         </a>
                     </div>
@@ -160,5 +254,102 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<style>
+    .ts-wrapper {
+        width: 100%;
+    }
+    .ts-wrapper .ts-control {
+        min-height: 42px;
+        padding: 8px 32px 8px 14px;
+        border: 1px solid #e7e5e4;
+        border-radius: 0.75rem;
+        background-color: #fafaf9;
+        font-size: 0.875rem;
+        color: #44403c;
+        cursor: pointer;
+        box-shadow: none;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+    }
+    .ts-wrapper .ts-control:hover {
+        border-color: #d6d3d1;
+    }
+    .ts-wrapper.focus .ts-control {
+        border-color: #d97706;
+        box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15);
+        outline: none;
+    }
+    .ts-wrapper .ts-control input {
+        font-size: 0.875rem;
+        color: #44403c;
+    }
+    .ts-wrapper .ts-control input::placeholder {
+        color: #a8a29e;
+    }
+    .ts-wrapper .ts-dropdown {
+        border: 1px solid #e7e5e4;
+        border-radius: 0.75rem;
+        margin-top: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        background: white;
+    }
+    .ts-wrapper .ts-dropdown .ts-dropdown-content {
+        max-height: 240px;
+    }
+    .ts-wrapper .ts-dropdown .option {
+        padding: 8px 14px;
+        font-size: 0.875rem;
+        color: #44403c;
+        border-bottom: 1px solid #f5f5f4;
+    }
+    .ts-wrapper .ts-dropdown .option.active {
+        background-color: #fffbeb;
+        color: #b45309;
+    }
+    .ts-wrapper .ts-dropdown .option.selected {
+        background-color: #fef3c7;
+        font-weight: 500;
+    }
+    .ts-wrapper .ts-dropdown .no-results {
+        padding: 10px 14px;
+        color: #a8a29e;
+        font-size: 0.8rem;
+    }
+    .ts-wrapper.disabled .ts-control {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: #f5f5f4;
+    }
+    .ts-wrapper.single .ts-control:after {
+        border-color: #a8a29e transparent transparent transparent;
+        border-width: 5px 4px 0 4px;
+        right: 12px;
+        margin-top: -2px;
+    }
+    .ts-wrapper.single.dropdown-active .ts-control:after {
+        border-color: transparent transparent #a8a29e transparent;
+        border-width: 0 4px 5px 4px;
+        margin-top: -3px;
+    }
+    .ts-wrapper .ts-control .item {
+        line-height: 1.4;
+    }
+    @keyframes ts-spin {
+        to { transform: rotate(360deg); }
+    }
+    .ts-wrapper .ts-control .spinner {
+        display: none;
+    }
+    @keyframes shimmer {
+        0% { background-position: -200px 0; }
+        100% { background-position: calc(200px + 100%) 0; }
+    }
+    .ts-wrapper.loading .ts-control {
+        background-image: linear-gradient(90deg, #fafaf9 25%, #f5f5f4 50%, #fafaf9 75%);
+        background-size: 200px 100%;
+        animation: shimmer 1.5s ease-in-out infinite;
+    }
+</style>
 <script src="{% static 'js/cascading-address.js' %}"></script>
 {% endblock %}

@@ -24,6 +24,7 @@ class PaymentAdmin(admin.ModelAdmin):
     search_fields = ['order__order_number', 'transaction_id', 'payment_method']
     autocomplete_fields = ['order']
     readonly_fields = ['snap_token', 'snap_redirect_url', 'raw_response', 'created_at', 'updated_at']
+    list_select_related = ['order']
     ordering = ['-created_at']
 
     fieldsets = (

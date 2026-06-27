@@ -1,0 +1,154 @@
+{% load core_tags %}
+{% if vouchers %}
+<section id="promo" class="py-20 lg:py-28 bg-gradient-to-b from-stone-900 to-[#1A1411]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-xl mx-auto mb-16">
+            <span class="text-amber-500 font-medium text-sm tracking-[0.2em] uppercase flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6h.008v.008H6V6z"></path>
+                </svg>
+                Promo Spesial
+            </span>
+            <h2 class="mt-4 text-3xl lg:text-4xl font-serif font-bold text-white">Voucher & Promo</h2>
+            <p class="mt-4 text-stone-400 leading-relaxed">Klaim voucher diskon eksklusif dan nikmati hemat belanja parfum favorit Anda</p>
+        </div>
+
+        {% if user.is_authenticated and user.is_superuser %}
+        <div class="text-center mb-8">
+            <span class="inline-flex items-center gap-2 px-4 py-2 bg-stone-800 text-stone-400 text-sm rounded-xl border border-stone-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"></path>
+                </svg>
+                Login sebagai pelanggan untuk mengklaim voucher
+            </span>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {% for voucher in vouchers %}
+            <div class="group relative bg-stone-800/40 backdrop-blur-sm rounded-2xl border border-stone-700/60 overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:border-amber-500/30">
+                <div class="absolute top-0 right-0 w-40 h-40 -mr-10 -mt-10 rounded-full
+                    {% if voucher.discount_type == 'percentage' and voucher.discount_amount >= 50 %}bg-amber-500/10{% else %}bg-emerald-500/10{% endif %}"></div>
+                <div class="absolute top-4 right-4">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-900/60 text-emerald-300 border border-emerald-700/50">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        Aktif
+                    </span>
+                </div>
+
+                <div class="p-6 lg:p-8">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs font-bold text-amber-500/80 uppercase tracking-[0.15em]">{{ voucher.code }}</span>
+                    </div>
+                    <h3 class="text-2xl font-serif font-bold text-white mt-1">
+                        {% if voucher.discount_type == 'percentage' %}
+                        {{ voucher.discount_amount }}% OFF
+                        {% else %}
+                        {{ voucher.discount_amount|rupiah }}
+                        {% endif %}
+                    </h3>
+
+                    {% if voucher.description %}
+                    <p class="text-sm text-stone-400 mt-3 leading-relaxed">{{ voucher.description }}</p>
+                    {% endif %}
+
+                    <div class="mt-5 space-y-2.5 text-sm text-stone-400">
+                        {% if voucher.min_purchase %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Min. belanja {{ voucher.min_purchase|rupiah }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Berlaku sampai {{ voucher.expired_date|date:"d M Y" }}</span>
+                        </div>
+                        {% if voucher.quota > 0 %}
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-stone-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <span>Sisa {{ voucher.remaining_quota }} dari {{ voucher.quota }} kuota</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-6">
+                        {% if user.is_authenticated and not user.is_superuser %}
+                        <button onclick="claimVoucher({{ voucher.id }}, this)"
+                            class="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-500 text-stone-900 font-semibold py-3 px-5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-[0.98] claim-btn"
+                            data-voucher-id="{{ voucher.id }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Klaim Voucher
+                        </button>
+                        {% elif user.is_authenticated and user.is_superuser %}
+                        <span class="flex items-center justify-center gap-2 w-full bg-stone-700 text-stone-400 text-sm font-medium py-3 px-5 rounded-xl border border-stone-600 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            Mode Admin
+                        </span>
+                        {% else %}
+                        <a href="{% url 'accounts:login' %}?next={{ request.path }}#promo"
+                            class="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-500 text-stone-900 font-semibold py-3 px-5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-[0.98]">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                            </svg>
+                            Masuk untuk Klaim
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if user.is_authenticated and not user.is_superuser %}
+        <div class="text-center mt-10">
+            <a href="{% url 'promotions:voucher_list' %}"
+                class="inline-flex items-center gap-2 text-sm font-medium text-stone-400 hover:text-amber-400 transition-colors group">
+                Lihat Semua Voucher Saya
+                <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+<script>
+function claimVoucher(voucherId, btn) {
+    var originalHtml = btn.innerHTML;
+    btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Memproses...';
+    btn.disabled = true;
+
+    fetch('/promotions/claim/' + voucherId + '/ajax/')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Diklaim';
+                btn.classList.remove('bg-amber-600', 'hover:bg-amber-500', 'text-stone-900');
+                btn.classList.add('bg-emerald-600', 'text-white', 'cursor-not-allowed');
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                alert(data.error || 'Gagal mengklaim voucher');
+            }
+        })
+        .catch(function() {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            alert('Terjadi kesalahan. Silakan coba lagi.');
+        });
+}
+</script>

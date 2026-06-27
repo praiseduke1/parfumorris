@@ -1,12 +1,16 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth.models import User
 from django.test import Client
 from django.urls import reverse
+from django.utils.timezone import now
 from apps.products.models import Category, Product
 from apps.orders.forms import CheckoutForm
 from apps.orders.models import Order, OrderItem, OrderStatusHistory
 from apps.carts.models import Cart, CartItem
 from apps.regions.models import Province, City, District, PostalCode
+from apps.promotions.models import Voucher as PromoVoucher, UserVoucher
 
 
 @pytest.mark.django_db
@@ -231,4 +235,260 @@ class TestCheckoutFormHierarchy:
         order = form.save(commit=False)
         assert order.province == 'Test Province'
         assert order.city == 'Test City'
+        assert order.district == 'Test District'
         assert order.postal_code == '11111'
+
+
+@pytest.mark.django_db
+class TestVoucherFlow:
+    """Test Cart → Voucher → Checkout flow end-to-end."""
+
+    def _setup(self):
+        user = User.objects.create_user(username='buyer', password='pass12345')
+        cat = Category.objects.create(name='Parfum', slug='parfum')
+        prod = Product.objects.create(
+            name='Test Parfum', slug='test-parfum',
+            category=cat, price=100000, stock=99,
+        )
+        Cart.objects.create(user=user)
+        cart = Cart.objects.get(user=user)
+        CartItem.objects.create(cart=cart, product=prod, quantity=2)
+        return user, prod, cart
+
+    def _setup_voucher(self, min_purchase=0, quota=0, expired_days=30):
+        voucher = PromoVoucher.objects.create(
+            code='TEST10',
+            description='Test voucher 10%',
+            discount_type=PromoVoucher.DiscountType.PERCENTAGE,
+            discount_amount=10,
+            min_purchase=min_purchase,
+            max_discount=50000,
+            quota=quota,
+            start_date=now().date() - timedelta(days=1),
+            expired_date=now().date() + timedelta(days=expired_days),
+            is_active=True,
+        )
+        return voucher
+
+    def _setup_regions(self):
+        prov = Province.objects.create(code='11', name='Test Prov')
+        city = City.objects.create(code='1101', name='Test City', province=prov)
+        dist = District.objects.create(code='110101', name='Test Dist', city=city)
+        pc = PostalCode.objects.create(code='11111', district=dist)
+        return prov, city, dist, pc
+
+    # --- Apply voucher tests (no order created) ---
+
+    def test_apply_voucher_valid(self):
+        user, _prod, cart = self._setup()
+        self._setup_voucher()
+        client = Client()
+        client.force_login(user)
+        response = client.post(reverse('carts:apply_voucher'), {'code': 'TEST10'}, follow=True)
+        assert response.status_code == 200
+        messages_list = list(response.context['messages'])
+        assert any('berhasil diterapkan' in str(m) for m in messages_list)
+        assert client.session.get('voucher_code') == 'TEST10'
+        assert Order.objects.count() == 0
+
+    def test_apply_voucher_expired(self):
+        user, _prod, cart = self._setup()
+        self._setup_voucher(expired_days=-1)
+        client = Client()
+        client.force_login(user)
+        response = client.post(reverse('carts:apply_voucher'), {'code': 'TEST10'}, follow=True)
+        messages_list = list(response.context['messages'])
+        assert any('kedaluwarsa' in str(m) for m in messages_list)
+        assert client.session.get('voucher_code') is None
+
+    def test_apply_voucher_min_purchase_fails(self):
+        user, _prod, cart = self._setup()
+        self._setup_voucher(min_purchase=500000)
+        client = Client()
+        client.force_login(user)
+        response = client.post(reverse('carts:apply_voucher'), {'code': 'TEST10'}, follow=True)
+        messages_list = list(response.context['messages'])
+        assert any('Minimum pembelian' in str(m) for m in messages_list)
+        assert client.session.get('voucher_code') is None
+
+    def test_apply_voucher_quota_exhausted(self):
+        user, _prod, cart = self._setup()
+        voucher = self._setup_voucher(quota=1)
+        UserVoucher.objects.create(
+            user=user, voucher=voucher, status=UserVoucher.Status.USED,
+            expires_at=now() + timedelta(days=30),
+        )
+        client = Client()
+        client.force_login(user)
+        response = client.post(reverse('carts:apply_voucher'), {'code': 'TEST10'}, follow=True)
+        messages_list = list(response.context['messages'])
+        assert any('Kuota' in str(m) or 'habis' in str(m) for m in messages_list)
+        assert client.session.get('voucher_code') is None
+
+    def test_apply_voucher_does_not_create_order(self):
+        user, _prod, cart = self._setup()
+        self._setup_voucher()
+        client = Client()
+        client.force_login(user)
+        client.post(reverse('carts:apply_voucher'), {'code': 'TEST10'})
+        assert Order.objects.count() == 0
+
+    # --- Cart detail shows discount ---
+
+    def test_cart_detail_shows_discount(self):
+        user, prod, cart = self._setup()
+        self._setup_voucher()
+        client = Client()
+        client.force_login(user)
+        session = client.session
+        session['voucher_code'] = 'TEST10'
+        session.save()
+        response = client.get(reverse('carts:detail'))
+        assert response.status_code == 200
+        assert response.context['voucher_code'] == 'TEST10'
+        expected_discount = int(200000 * 10 / 100)
+        assert response.context['voucher_discount'] == expected_discount
+        assert response.context['final_total'] == 200000 - expected_discount
+
+    # --- Checkout without voucher ---
+
+    def test_checkout_without_voucher(self):
+        user, _prod, cart = self._setup()
+        prov, city, dist, pc = self._setup_regions()
+        client = Client()
+        client.force_login(user)
+        session = client.session
+        session['shipping'] = {'courier_code': 'jne', 'service': 'OKE', 'cost': 15000, 'etd': '3-5'}
+        session.save()
+        response = client.post(reverse('orders:create'), {
+            'recipient_name': 'Buyer',
+            'phone': '08123456789',
+            'shipping_address': 'Jl. Test No. 10',
+            'province': prov.id,
+            'city': city.id,
+            'district': dist.id,
+            'postal_code': pc.id,
+        })
+        assert response.status_code == 302
+        assert Order.objects.count() == 1
+        order = Order.objects.first()
+        assert order.subtotal == 200000
+        assert order.discount_amount == 0
+        assert order.total_price == 200000 + 15000
+
+    # --- Checkout with valid voucher ---
+
+    def test_checkout_with_valid_voucher(self):
+        user, _prod, cart = self._setup()
+        self._setup_voucher()
+        prov, city, dist, pc = self._setup_regions()
+        client = Client()
+        client.force_login(user)
+        session = client.session
+        session['voucher_code'] = 'TEST10'
+        session['shipping'] = {'courier_code': 'jne', 'service': 'OKE', 'cost': 15000, 'etd': '3-5'}
+        session.save()
+        response = client.post(reverse('orders:create'), {
+            'recipient_name': 'Buyer',
+            'phone': '08123456789',
+            'shipping_address': 'Jl. Test No. 10',
+            'province': prov.id,
+            'city': city.id,
+            'district': dist.id,
+            'postal_code': pc.id,
+        })
+        assert response.status_code == 302
+        assert Order.objects.count() == 1
+        order = Order.objects.first()
+        assert order.subtotal == 200000
+        expected_discount = int(200000 * 10 / 100)
+        assert order.discount_amount == expected_discount
+        assert order.total_price == 200000 - expected_discount + 15000
+
+    # --- Checkout with invalid voucher at re-validation ---
+
+    def test_checkout_with_expired_voucher_rejected(self):
+        user, _prod, cart = self._setup()
+        voucher = self._setup_voucher(expired_days=-1)
+        prov, city, dist, pc = self._setup_regions()
+        client = Client()
+        client.force_login(user)
+        session = client.session
+        session['voucher_code'] = 'TEST10'
+        session['shipping'] = {'courier_code': 'jne', 'service': 'OKE', 'cost': 15000, 'etd': '3-5'}
+        session.save()
+        response = client.post(reverse('orders:create'), {
+            'recipient_name': 'Buyer',
+            'phone': '08123456789',
+            'shipping_address': 'Jl. Test No. 10',
+            'province': prov.id,
+            'city': city.id,
+            'district': dist.id,
+            'postal_code': pc.id,
+        })
+        assert response.status_code == 302
+        assert Order.objects.count() == 0
+        assert client.session.get('voucher_code') is None
+
+    def test_checkout_voucher_usage_recorded(self):
+        user, _prod, cart = self._setup()
+        voucher = self._setup_voucher()
+        uv = UserVoucher.objects.create(
+            user=user, voucher=voucher, status=UserVoucher.Status.AVAILABLE,
+            expires_at=now() + timedelta(days=30),
+        )
+        prov, city, dist, pc = self._setup_regions()
+        client = Client()
+        client.force_login(user)
+        session = client.session
+        session['voucher_code'] = 'TEST10'
+        session['shipping'] = {'courier_code': 'jne', 'service': 'OKE', 'cost': 15000, 'etd': '3-5'}
+        session.save()
+        response = client.post(reverse('orders:create'), {
+            'recipient_name': 'Buyer',
+            'phone': '08123456789',
+            'shipping_address': 'Jl. Test No. 10',
+            'province': prov.id,
+            'city': city.id,
+            'district': dist.id,
+            'postal_code': pc.id,
+        })
+        assert response.status_code == 302
+        uv.refresh_from_db()
+        assert uv.status == UserVoucher.Status.USED
+        assert uv.used_at is not None
+
+    # --- Discount never exceeds subtotal ---
+
+    def test_discount_never_exceeds_subtotal(self):
+        user, prod, cart = self._setup()
+        PromoVoucher.objects.create(
+            code='FIXED500',
+            description='Rp 500k off',
+            discount_type=PromoVoucher.DiscountType.FIXED,
+            discount_amount=500000,
+            min_purchase=0,
+            start_date=now().date() - timedelta(days=1),
+            expired_date=now().date() + timedelta(days=30),
+            is_active=True,
+        )
+        prov, city, dist, pc = self._setup_regions()
+        client = Client()
+        client.force_login(user)
+        session = client.session
+        session['voucher_code'] = 'FIXED500'
+        session['shipping'] = {'courier_code': 'jne', 'service': 'OKE', 'cost': 15000, 'etd': '3-5'}
+        session.save()
+        response = client.post(reverse('orders:create'), {
+            'recipient_name': 'Buyer',
+            'phone': '08123456789',
+            'shipping_address': 'Jl. Test No. 10',
+            'province': prov.id,
+            'city': city.id,
+            'district': dist.id,
+            'postal_code': pc.id,
+        })
+        assert response.status_code == 302
+        order = Order.objects.first()
+        assert order.discount_amount == 200000
+        assert order.total_price == 0 + 15000

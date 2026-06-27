@@ -73,16 +73,6 @@ class ProductImageInline(admin.TabularInline):
     fields = ['image', 'alt_text', 'is_primary', 'sort_order']
 
 
-class ReviewInline(admin.TabularInline):
-    model = Review
-    extra = 0
-    readonly_fields = ['user', 'rating', 'comment']
-    can_delete = False
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['product_info', 'category_badge', 'brand_badge', 'formatted_price', 'stock_badge', 'status_display', 'created_at']
@@ -91,6 +81,7 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ['name', 'description', 'brand__name']
     autocomplete_fields = ['category', 'brand']
     prepopulated_fields = {'slug': ('name',)}
+    list_select_related = ['category', 'brand']
     date_hierarchy = 'created_at'
     ordering = ['-created_at']
     readonly_fields = ['thumbnail_preview_detail']
@@ -123,10 +114,6 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('image', 'thumbnail_preview_detail')
         }),
     )
-
-    def variant_count(self, obj):
-        return obj.variants.count()
-    variant_count.short_description = 'Varian'
 
     def product_info(self, obj):
         if obj.image:
@@ -222,6 +209,7 @@ class ProductSlugRedirectAdmin(admin.ModelAdmin):
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ['product', 'user', 'rating_stars', 'created_at']
+    list_select_related = ['product', 'user']
     list_filter = ['rating', 'created_at']
     search_fields = ['product__name', 'user__username', 'comment']
     autocomplete_fields = ['product', 'user']

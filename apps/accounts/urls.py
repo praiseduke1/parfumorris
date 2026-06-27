@@ -27,7 +27,6 @@ urlpatterns = [
     path('reset/success/', auth_views.PasswordResetCompleteView.as_view(
         template_name='accounts/password_reset_success.html',
     ), name='password_reset_success'),
-    path('vouchers/', include('apps.promotions.urls')),
     path('wishlist/', views.wishlist_list, name='wishlist_list'),
     path('wishlist/add/<int:product_id>/', views.wishlist_add, name='wishlist_add'),
     path('wishlist/remove/<int:product_id>/', views.wishlist_remove, name='wishlist_remove'),

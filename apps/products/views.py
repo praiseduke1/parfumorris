@@ -16,7 +16,7 @@ class HomeView(TemplateView):
     template_name = 'products/home.html'
 
     def get_context_data(self, **kwargs):
-        logger.warning(
+        logger.debug(
             f"HomeView — user={self.request.user.id} "
             f"username={self.request.user.username} "
             f"superuser={self.request.user.is_superuser}"
@@ -25,9 +25,6 @@ class HomeView(TemplateView):
         context['featured_products'] = Product.objects.filter(
             is_available=True
         ).select_related('category').prefetch_related('fragrance_notes', 'fragrance_families')[:8]
-        context['categories'] = Category.objects.annotate(
-            product_count=Count('products', filter=Q(products__is_available=True))
-        )
         context['new_products'] = Product.objects.filter(
             is_available=True
         ).select_related('category').prefetch_related('fragrance_notes', 'fragrance_families').order_by('-created_at')[:4]
@@ -37,6 +34,21 @@ class HomeView(TemplateView):
         context['fragrance_families'] = FragranceFamily.objects.annotate(
             product_count=Count('products', filter=Q(products__is_available=True))
         )
+
+        from apps.promotions.models import Voucher, UserVoucher
+        vouchers = Voucher.objects.active()
+        user = self.request.user
+        user_claimed_ids = set()
+        if user.is_authenticated and not user.is_superuser:
+            user_claimed_ids = set(
+                UserVoucher.objects.filter(user=user)
+                .values_list('voucher_id', flat=True)
+            )
+        elif user.is_superuser:
+            vouchers = vouchers.none()
+        context['vouchers'] = vouchers
+        context['user_claimed_voucher_ids'] = user_claimed_ids
+
         return context
 
 
@@ -47,7 +59,7 @@ class ProductListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        logger.warning(
+        logger.debug(
             f"ProductListView — user={self.request.user.id} "
             f"username={self.request.user.username} "
             f"superuser={self.request.user.is_superuser}"
@@ -99,7 +111,7 @@ class ProductDetailView(DetailView):
             )
 
     def get_queryset(self):
-        logger.warning(
+        logger.debug(
             f"ProductDetailView — user={self.request.user.id} "
             f"username={self.request.user.username} "
             f"superuser={self.request.user.is_superuser}"
@@ -162,7 +174,7 @@ class ProductByNoteView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        logger.warning(
+        logger.debug(
             f"ProductByNoteView — user={self.request.user.id} "
             f"username={self.request.user.username} "
             f"superuser={self.request.user.is_superuser}"
