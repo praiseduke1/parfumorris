@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "chmod +x build_files.sh && ./build_files.sh",
   "functions": {
     "api/index.py": {
       "runtime": "vercel-python@4.3.0",
